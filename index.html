@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Сайт ELGA — концепция и КП</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;600;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Колода полноэкранных слайдов, каждый наплывает на предыдущий как шторка; сквозной мотив — линия пути и тлеющая точка угля */
+:root{
+  --coal:#000000; --coal-2:#0e0e0e; --coal-3:#1a1a1a; --snow:#ffffff; --ash:#8c8c8c; --frost:#eaeaea;
+  --line:rgba(255,255,255,.16); --ember:#ffa000; --ember-ink:#b87300; --paper:#ffffff; --ink:#000000; --ink-2:#5c5c5c;
+  --f-disp:"Roboto Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Golos Text",Arial,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+body{background:var(--coal);color:var(--snow);font:400 17px/1.55 var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{margin:0;font-weight:500;text-wrap:balance}
+p{margin:0}
+.nw{white-space:nowrap}
+.s{position:relative;min-height:100vh;min-height:100svh;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:center;
+  padding-block:92px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:var(--coal);overflow:hidden;transform-origin:50% 0}
+.w{position:relative;z-index:2;width:100%;max-width:1240px;margin:0 auto}
+.scene{position:absolute;inset:0;z-index:0;pointer-events:none}
+.scene canvas,.scene svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scene.live{pointer-events:auto}
+.light{background:var(--paper);color:var(--ink)}
+.light .eb,.light .note{color:var(--ink-2)}
+.eb{font:500 12px/1.4 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
+.eb b{color:var(--ember);font-weight:500}
+.h2{font:500 clamp(30px,3.7vw,56px)/1.08 var(--f-disp);letter-spacing:-.01em;margin-top:18px;max-width:18em}
+.lead{font-size:clamp(17px,1.35vw,20px);line-height:1.55;color:#c5ccd1;max-width:36em;margin-top:22px}
+.light .lead{color:#3c4145}
+.big{font:300 clamp(64px,10.5vw,168px)/.92 var(--f-disp);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.big small{font-size:.32em;letter-spacing:0;font-weight:400;margin-left:.15em}
+.note{font:400 12px/1.5 var(--f-mono);color:var(--ash);letter-spacing:.02em}
+.tag{position:absolute;z-index:3;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:22px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.grid{display:grid;gap:clamp(16px,2.4vw,32px)}
+.card{border-top:1px solid var(--line);padding-top:18px;min-width:0}
+.light .card{border-top-color:rgba(18,19,20,.16)}
+.card h3{font:500 19px/1.3 var(--f-body);margin-bottom:8px}
+.card p{color:#b4bcc2;font-size:16px}
+.light .card p{color:#4a4f53}
+
+/* HUD */
+.hud{position:fixed;z-index:30;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;pointer-events:none;
+  padding:calc(20px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));
+  font:500 12px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#fff;mix-blend-mode:difference}
+.hud .cnt{font-variant-numeric:tabular-nums}
+.rail{position:fixed;z-index:30;right:max(22px,env(safe-area-inset-right,0px));top:50%;height:56vh;transform:translateY(-50%);width:2px;pointer-events:none}
+.rail::before{content:"";position:absolute;left:0;top:0;bottom:0;width:1px;background:rgba(143,150,156,.45)}
+.rail i{position:absolute;left:-3px;width:7px;height:1px;background:rgba(143,150,156,.7)}
+.rail .dot{position:absolute;left:-4px;width:9px;height:9px;border-radius:50%;background:var(--ember);box-shadow:0 0 0 4px rgba(255,160,0,.18);transition:top .7s cubic-bezier(.3,.7,.2,1);margin-top:-4px}
+.rail .lbl{display:none;position:absolute;right:16px;white-space:nowrap;font:500 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ash);transition:top .7s cubic-bezier(.3,.7,.2,1);margin-top:-5px}
+.hint{position:fixed;z-index:30;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font:500 11px/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#fff;mix-blend-mode:difference;pointer-events:none;transition:opacity .6s}
+.hint.off{opacity:0}
+
+/* reveal */
+html.anim .s .rv{opacity:0;transform:translateY(26px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform 1s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+html.anim .s.on .rv{opacity:1;transform:none}
+
+/* cover */
+#cover h1{font:400 clamp(58px,10vw,164px)/.9 var(--f-disp);letter-spacing:-.035em;margin-top:22px}
+#cover .sub{font-size:clamp(18px,1.6vw,24px);max-width:22em;margin-top:26px;color:#d7dcdf}
+#cover .w{margin-top:auto}
+#cover .meta{display:flex;gap:28px;flex-wrap:wrap;margin-top:40px}
+
+/* word light (как CoMinVi) */
+.words{font:400 clamp(24px,2.7vw,40px)/1.28 var(--f-body);letter-spacing:-.01em;max-width:26em;margin-top:22px}
+.words span{color:#3b4045;transition:color .5s}
+.words span.lit{color:var(--snow)}
+html:not(.anim) .words span{color:var(--snow)}
+
+/* review */
+.cmp{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,64px);align-items:center;margin-top:34px}
+.mock-old{background:#fff;color:#111;border-radius:6px;aspect-ratio:16/10;display:grid;grid-template-columns:22% 1fr;overflow:hidden;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.mock-old .nav{padding:9% 9%;display:flex;flex-direction:column;gap:7%;font:500 clamp(6px,.62vw,9px)/1.2 var(--f-body);color:#222}
+.mock-old .nav b{font:600 clamp(8px,.9vw,13px)/1 var(--f-body);margin-bottom:12%}
+.mock-old .pic{background:linear-gradient(170deg,#9aa0a3,#5f6467 55%,#7d8386);position:relative}
+.mock-old .pic::after{content:"";position:absolute;left:10%;right:30%;top:42%;height:6%;background:rgba(255,255,255,.85);box-shadow:0 160% 0 rgba(255,255,255,.85),0 320% 0 rgba(255,255,255,.85)}
+.rows{display:grid;gap:0}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1.25fr);gap:14px;align-items:baseline;padding:13px 0;border-top:1px solid var(--line);font-size:16px}
+.row .was{color:#878e94}
+.row .arr{color:var(--ember);font-family:var(--f-mono)}
+.row .now{color:var(--snow)}
+.row.hd{font:500 11px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ash);border-top:0;padding-top:0}
+
+/* idea path */
+.path{position:relative;margin-top:56px}
+.path svg{width:100%;height:auto;display:block;overflow:visible}
+.stops{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin-top:18px}
+.stops div{min-width:0}
+.stops b{display:block;font:500 15px/1.3 var(--f-body)}
+.stops span{display:block;font-size:14px;color:#9ba3a9;margin-top:4px}
+.stops em{display:block;font:500 11px/1 var(--f-mono);font-style:normal;color:var(--ember);letter-spacing:.12em;margin-bottom:10px}
+
+/* chapters */
+.chap .w{display:flex;flex-direction:column;height:100%}
+.chap .top{display:flex;justify-content:flex-end;gap:16px;align-items:baseline}
+.chap .copy{margin-top:auto}
+.ref{font:400 12px/1.5 var(--f-mono);color:var(--ash)}
+.ref b{font-weight:500;color:inherit}
+#ch1 .scene{background:#e7eaec}
+#ch1 .big,#ch1 .h2{color:var(--ink)}
+.facts{display:flex;gap:clamp(20px,4vw,56px);flex-wrap:wrap;margin-top:28px}
+.facts div{min-width:0}
+.facts b{display:block;font:300 clamp(30px,3.3vw,48px)/1 var(--f-disp);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.facts>div>span{display:block;font-size:14px;margin-top:8px;max-width:15em}
+#ch1 .facts>div>span{color:#454b50}
+#ch2 .copy,#ch3 .copy,#ch4 .copy{max-width:38rem}
+#ch2 .h2,#ch4 .h2{font-size:clamp(28px,3vw,46px)}
+#ch2 .w{pointer-events:none}
+#ch2 .scene canvas{cursor:grab;touch-action:pan-y}
+#ch2 .scene canvas:active{cursor:grabbing}
+.drag{display:inline-flex;gap:10px;align-items:center;margin-top:26px;font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--frost)}
+.drag::before{content:"";width:26px;height:1px;background:currentColor}
+
+/* markets */
+.mk{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:clamp(20px,4vw,56px);align-items:center;margin-top:24px}
+.mk svg{width:100%;height:auto;overflow:visible}
+.mk .ray{stroke:var(--frost);stroke-width:1.2;fill:none}
+html.anim #ch5 .ray{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);transition:stroke-dashoffset 1.6s cubic-bezier(.3,.6,.2,1);transition-delay:var(--d)}
+html.anim #ch5.on .ray{stroke-dashoffset:0}
+.mk .ring{stroke:rgba(255,255,255,.14);fill:none;stroke-dasharray:2 6}
+.mk text{font-family:var(--f-mono);fill:var(--ash);font-size:18px}
+.mk text.c{fill:var(--snow);font-family:var(--f-body);font-size:24px;font-weight:500}
+.mk text.d{fill:var(--snow);font-family:var(--f-disp);font-size:28px;font-weight:300}
+.pulse{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.9}}
+
+/* finale of homepage */
+.entries{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:40px;border-top:1px solid var(--line)}
+.entries div{padding:22px 22px 26px 0;border-bottom:1px solid var(--line);min-width:0;display:flex;justify-content:space-between;gap:12px}
+.entries b{font:500 clamp(18px,1.7vw,24px)/1.25 var(--f-body)}
+.entries span{font:400 12px/1.5 var(--f-mono);color:var(--ash);text-align:right}
+.entries .tg span{color:var(--ember)}
+
+/* phones */
+.phones{display:flex;gap:clamp(14px,2.4vw,34px);justify-content:center;align-items:flex-end;margin-top:8px}
+.ph{width:clamp(150px,15vw,230px);aspect-ratio:9/19;border-radius:28px;background:#000;padding:8px;box-shadow:0 0 0 1px #2a2e32,0 40px 80px rgba(0,0,0,.5);flex:0 0 auto;max-width:31%}
+.ph>div{width:100%;height:100%;border-radius:21px;overflow:hidden;position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:16px 14px}
+.ph .t{font:400 clamp(16px,1.6vw,22px)/1.05 var(--f-disp);letter-spacing:-.02em}
+.ph .m{font:400 9px/1.4 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ash);margin-bottom:8px}
+.ph.mid{transform:translateY(-26px)}
+.p1{background:radial-gradient(ellipse at 60% 40%,#3a3f44 0,#1a1d20 40%,#0b0c0d 75%)}
+.p1::before{content:"";position:absolute;left:50%;top:34%;width:150%;aspect-ratio:1.4;transform:translate(-50%,-50%);border-radius:50%;
+  background:repeating-radial-gradient(ellipse at center,transparent 0 9px,rgba(255,255,255,.28) 9px 10px)}
+.p2{background:linear-gradient(#11161b,#3f4d58 60%,#c6cfd5 61%,#e7ebee)}
+.p3{background:var(--paper);color:var(--ink);justify-content:flex-start!important;gap:11px;font:500 13px/1.25 var(--f-body)}
+.p3 i{display:block;height:1px;background:rgba(18,19,20,.14)}
+.p3 b{font:500 10px/1 var(--f-mono);letter-spacing:.12em;margin-bottom:6px}
+
+/* inner pages */
+.inner{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:clamp(24px,4vw,64px);align-items:start;margin-top:30px}
+.page{background:#fff;color:#111;border:1px solid rgba(18,19,20,.14);border-radius:6px;display:grid;grid-template-columns:24% 1fr;min-height:0;overflow:hidden}
+.page nav{padding:22px 18px;border-right:1px solid rgba(18,19,20,.1);display:flex;flex-direction:column;gap:9px;font-size:12.5px;color:#666}
+.page nav b{font:600 14px/1 var(--f-body);color:#111;margin-bottom:14px;letter-spacing:.04em}
+.page nav .a{color:#111;font-weight:600}
+.page main{padding:24px 26px 26px;min-width:0}
+.page h4{font:500 clamp(20px,1.9vw,28px)/1.1 var(--f-disp);margin:0 0 16px;letter-spacing:-.01em}
+.page .co{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:12px;padding:10px 0;border-top:1px solid #e5e5e3;font-size:13px}
+.page .co b{font-weight:600}
+.page .co span{color:#555}
+.map{font-size:15px;display:grid;gap:0}
+.map div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid rgba(18,19,20,.12)}
+.map div span{font:400 11px/1.6 var(--f-mono);color:var(--ink-2);text-align:right}
+.map div.on span{color:#b87300}
+
+/* toggles */
+.tgl{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:clamp(24px,4vw,64px);align-items:center;margin-top:30px}
+.sw{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:15px 0;border-top:1px solid var(--line);cursor:pointer;font-size:17px}
+.sw input{appearance:none;-webkit-appearance:none;width:46px;height:26px;border-radius:13px;background:#2b2f33;position:relative;cursor:pointer;flex:0 0 auto;transition:background .25s;margin:0}
+.sw input::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#8f969c;transition:transform .25s,background .25s}
+.sw input:checked{background:var(--ember)}
+.sw input:checked::after{transform:translateX(20px);background:#fff}
+.sw input:focus-visible{outline:2px solid var(--frost);outline-offset:3px}
+.site{background:#fff;color:#111;border-radius:6px;overflow:hidden;min-width:0}
+.site .bar{display:flex;gap:18px;align-items:center;padding:16px 20px;border-bottom:1px solid #e6e6e4;font-size:13px;flex-wrap:wrap}
+.site .bar b{font:600 15px/1 var(--f-body);letter-spacing:.06em;margin-right:8px}
+.site .bar span{transition:opacity .35s,max-width .35s;white-space:nowrap}
+.site .bar .x{opacity:.0;max-width:0;overflow:hidden}
+.site .bar .new{color:#b87300}
+.site .body{padding:22px 20px 24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.site .blk{border:1px solid #e6e6e4;border-radius:4px;padding:14px;min-height:96px;font-size:13px;transition:opacity .35s,transform .35s}
+.site .blk b{display:block;font:500 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#777;margin-bottom:10px}
+.site .blk.x{opacity:.08;transform:scale(.97)}
+.site .foot{padding:0 20px 18px;font:400 11px/1.4 var(--f-mono);color:#777}
+
+/* func */
+.func{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:40px}
+.func .card em{display:block;font:500 11px/1 var(--f-mono);font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--ember);margin-bottom:14px}
+
+/* tech */
+.tech{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:40px}
+.stack{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px}
+.stack span{border:1px solid var(--line);border-radius:30px;padding:9px 16px;font:500 13px/1 var(--f-mono)}
+
+/* gantt */
+.gantt{margin-top:40px;display:grid;gap:10px}
+.gr{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:18px;align-items:center}
+.gr b{font:500 15px/1.3 var(--f-body)}
+.gr b small{display:block;font:400 12px/1.4 var(--f-mono);color:var(--ash);margin-top:2px}
+.tr{position:relative;height:30px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px calc(100%/13))}
+.br{position:absolute;top:6px;bottom:6px;left:calc((var(--a) - 1)/13*100%);width:calc((var(--b) - var(--a) + 1)/13*100%);background:var(--frost);border-radius:2px;transform-origin:left}
+.br.e{background:var(--ember)}
+.br.o{background:transparent;border:1px dashed var(--frost)}
+html.anim #plan .br{transform:scaleX(0);transition:transform 1s cubic-bezier(.3,.7,.2,1);transition-delay:var(--d)}
+html.anim #plan.on .br{transform:none}
+.wk{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:18px}
+.wk div{position:relative;height:12px;font:400 11px/1 var(--f-mono);color:var(--ash)}
+.wk div span{position:absolute;top:0;padding-left:3px;white-space:nowrap}
+
+/* price */
+.price{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,4vw,56px);margin-top:30px;align-items:start}
+.est{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.est td{padding:9px 0;border-top:1px solid var(--line);vertical-align:baseline}
+.est td:nth-child(2),.est td:nth-child(3){text-align:right;white-space:nowrap;padding-left:16px;color:#c9d0d5}
+.est tr.opt-row td{color:var(--ember);border-top:1px dashed rgba(255,160,0,.5);padding-top:12px}
+.est tr.t td{border-top:1px solid rgba(255,255,255,.5);font-weight:600;color:var(--snow);padding-top:12px}
+.est th{font:500 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ash);text-align:left;padding-bottom:10px}
+.est th:nth-child(n+2){text-align:right}
+.var{border:1px solid var(--line);border-radius:6px;padding:22px 22px 20px;display:grid;gap:8px}
+.var+.var{margin-top:14px}
+.var.main{border-color:var(--ember)}
+.var .eb{color:var(--ash)}
+.var.main .eb{color:var(--ember)}
+.var .sum{font:300 clamp(30px,3vw,44px)/1 var(--f-disp);letter-spacing:-.02em;white-space:nowrap}
+.var p{font-size:14.5px;color:#b4bcc2}
+.var p.sum{color:var(--snow)}
+.opt{margin-top:14px;font-size:14.5px;color:#b4bcc2}
+.opt b{color:var(--snow);font-weight:500}
+
+/* close */
+.totop{display:inline-flex;align-items:center;gap:10px;margin-top:44px;font:700 15px/1 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--snow);text-decoration:none;border:1px solid var(--ember);padding:14px 20px;border-radius:2px;transition:background .2s,color .2s}
+.totop:hover,.totop:focus-visible{background:var(--ember);color:#000;outline:none}
+.contacts{display:flex;gap:clamp(24px,5vw,72px);flex-wrap:wrap;margin-top:44px}
+.contacts div{min-width:0}
+.contacts b{display:block;font:500 19px/1.3 var(--f-body);user-select:all}
+.contacts span{display:block;font-size:14px;color:var(--ash);margin-top:4px}
+
+@media (min-width:900px){
+  .s{padding-left:max(64px,env(safe-area-inset-left,0px));padding-right:max(96px,env(safe-area-inset-right,0px))}
+  .tag{left:max(64px,env(safe-area-inset-left,0px));right:max(96px,env(safe-area-inset-right,0px))}
+}
+@media (min-width:900px) and (min-height:700px){
+  .s{position:sticky;top:0;height:100vh;height:100svh;scroll-snap-align:none}
+  #deck{position:relative}
+  .snap{position:absolute;left:0;width:1px;height:100vh;scroll-snap-align:start;pointer-events:none}
+}
+.snap{display:none}
+@media (min-width:900px) and (min-height:700px){.snap{display:block}}
+@media (max-width:899px),(max-height:699px){
+  html{scroll-snap-type:y proximity}
+  .rail{display:none}
+}
+@media (max-width:899px){
+  .cmp,.mk,.tgl,.inner,.price{grid-template-columns:minmax(0,1fr)}
+  .stops{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:22px}
+  .entries{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .func,.tech{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gr,.wk{grid-template-columns:minmax(0,1fr)}
+  #mob-grid,#task-grid{grid-template-columns:minmax(0,1fr)!important}
+  .phones{margin-top:24px}
+  .gr{gap:6px}
+  .wk div{display:none}
+  .page{grid-template-columns:minmax(0,1fr)}
+  .page nav{display:none}
+  .chap{min-height:100svh}
+  .s{padding-block:84px 70px}
+}
+@media (max-width:560px){
+  .entries,.func,.tech{grid-template-columns:minmax(0,1fr)}
+  .row{grid-template-columns:minmax(0,1fr);gap:4px}
+  .row .arr{display:none}
+  .row.hd{display:none}
+  .row .was::before{content:"Было: ";color:#5f666b}
+  .site .body{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ph.mid{transform:none}
+  .est{font-size:13.5px}
+  .est td:nth-child(2){display:none}
+  .est th:nth-child(2){display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .pulse{animation:none}
+}
+/* Фирстиль ELGA: Activist → Roboto Condensed капсом, Atlas → Golos Text, акцент #FFA000, узор горизонталей */
+.h2,#cover h1,.big,.facts b,.var .sum,.ph .t,.page h4,.entries b,.card h3,.stops b{font-family:var(--f-disp);font-weight:700;text-transform:uppercase;letter-spacing:.01em}
+.h2{font-size:clamp(32px,4.3vw,66px);line-height:1.02}
+#cover h1{font-size:clamp(46px,7.4vw,124px);line-height:.92;letter-spacing:0;max-width:12em}
+.big{font-weight:700;letter-spacing:-.01em}
+.big small{font-weight:600}
+.facts b{font-weight:700;font-size:clamp(34px,3.8vw,58px)}
+.card h3{font-size:20px;letter-spacing:.02em}
+.entries b{font-size:clamp(20px,1.9vw,28px)}
+.stops b{font-size:17px}
+.page h4{font-size:clamp(22px,2.2vw,32px)}
+.words{font-family:var(--f-body)}
+.words span{color:#333}
+#ch2 .h2,#ch4 .h2{font-size:clamp(30px,3.3vw,52px)}
+.mk text.d{font-weight:700}
+.brandbar{position:absolute;z-index:3;top:calc(64px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:18px;color:#fff}
+.brandbar svg{fill:currentColor;display:block;flex:none}
+.brandbar .sg{width:clamp(34px,3.4vw,48px);height:auto}
+.brandbar .wm{height:clamp(22px,2.2vw,32px);width:auto}
+.brandbar i{flex:1;height:2px;background:var(--ember)}
+.clus{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:34px;border-top:1px solid var(--line)}
+.clus div{padding:18px 18px 22px 0;border-bottom:1px solid var(--line);min-width:0}
+.clus b{display:block;font:700 clamp(18px,1.6vw,24px)/1.15 var(--f-disp);text-transform:uppercase}
+.clus span{display:block;font:400 12px/1.5 var(--f-mono);color:var(--ember);margin-top:8px;letter-spacing:.06em}
+@media (min-width:900px){.brandbar{left:max(64px,env(safe-area-inset-left,0px));right:max(96px,env(safe-area-inset-right,0px))}}
+@media (max-width:899px){.clus{grid-template-columns:repeat(2,minmax(0,1fr))}.stops{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:560px){.clus{grid-template-columns:minmax(0,1fr)}}
+.motion{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:46px}
+.motion .ico{height:110px;width:100%;max-width:280px;display:block;margin-bottom:22px;overflow:visible}
+.motion .ico path,.motion .ico line{fill:none;stroke:rgba(255,255,255,.55);stroke-width:2;stroke-linecap:round}
+.motion .ico .acc{stroke:var(--ember);stroke-width:3}
+.motion .ico circle{fill:var(--ember)}
+.i1 .acc{stroke-dasharray:260;stroke-dashoffset:260;animation:i1 3.2s cubic-bezier(.5,0,.3,1) infinite}
+@keyframes i1{0%{stroke-dashoffset:260}55%,80%{stroke-dashoffset:0}100%{stroke-dashoffset:-260}}
+.i2 .zoom{transform-origin:186px 38px;animation:i2 4s ease-in-out infinite}
+@keyframes i2{0%,15%{transform:scale(1)}45%,60%{transform:scale(2.1)}90%,100%{transform:scale(1)}}
+.i2 .frame{stroke:rgba(255,160,0,.7)!important;stroke-width:1.5!important;stroke-dasharray:4 5;animation:i2f 4s ease-in-out infinite;transform-origin:186px 38px}
+@keyframes i2f{0%,15%{opacity:1;transform:scale(1)}45%,60%{opacity:0;transform:scale(2.6)}90%,100%{opacity:1;transform:scale(1)}}
+.i3 .bar{transform-origin:50% 100%;transform-box:fill-box;animation:i3 3.6s cubic-bezier(.3,.7,.2,1) infinite;animation-delay:var(--d)}
+@keyframes i3{0%{transform:scaleY(.05)}35%,80%{transform:scaleY(1)}100%{transform:scaleY(.05)}}
+.i3 circle{animation:blink 3.6s infinite}
+@keyframes blink{0%,30%{opacity:0}40%,80%{opacity:1}100%{opacity:0}}
+@media (max-width:899px){.motion{grid-template-columns:minmax(0,1fr)}.motion .ico{height:80px}}
+@media (prefers-reduced-motion:reduce){.i1 .acc,.i2 .zoom,.i2 .frame,.i3 .bar,.i3 circle{animation:none;stroke-dashoffset:0;transform:none;opacity:1}}
+.ph{cursor:pointer;outline:none}
+.ph:focus-visible{box-shadow:0 0 0 2px var(--ember),0 40px 80px rgba(0,0,0,.5)}
+.ph>.scr{padding:0;display:block;background:#000}
+.scr .l{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:16px 14px;transition:opacity .6s ease,transform .6s ease}
+.scr .l.b{opacity:0;transform:scale(1.05)}
+.ph:hover .l.a,.ph.alt .l.a{opacity:0;transform:scale(.97)}
+.ph:hover .l.b,.ph.alt .l.b{opacity:1;transform:none}
+.scr .l>canvas,.scr .l>.bg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scr .l>*{position:relative}
+.ph .t{font-size:clamp(15px,1.45vw,21px);line-height:1}
+.ph .ps{font:400 10px/1.35 var(--f-body);margin-top:6px}
+.mini{position:absolute!important;top:14px;left:12px;right:12px;display:flex;align-items:center;gap:6px;color:#fff}
+.mini svg{fill:currentColor;height:11px;width:auto;flex:none}
+.mini i{flex:1;height:1px;background:var(--ember)!important}
+.mini.dark{color:#000;position:relative!important;top:0;left:0;right:0;margin-bottom:12px}
+.scr .p3{justify-content:flex-start;background:#fff;color:#000;gap:9px;font:500 12px/1.25 var(--f-body)}
+.scr .p3 .pt{font:700 15px/1.05 var(--f-disp);text-transform:uppercase;margin-bottom:4px}
+.scr .p3 .news{color:var(--ember-ink);animation:newsblink 3s ease-in-out infinite}
+@keyframes newsblink{0%,100%{opacity:1}50%{opacity:.25}}
+.scr .p3 .langs{margin-top:auto;font:500 10px/1 var(--f-mono);letter-spacing:.1em;color:#777}
+.scr .p3 .langs b{color:#000}
+.train{animation:train 7s linear infinite}
+@keyframes train{0%{transform:translate(-40px,0)}100%{transform:translate(100px,-4px)}}
+.conv{animation:conv 1.2s linear infinite}
+@keyframes conv{to{stroke-dashoffset:-9}}
+.phint{margin-top:22px;color:var(--ember)}
+/* подсказка переключателей */
+.tryme{display:flex;align-items:center;gap:10px;font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ember);margin:0 0 10px;transition:opacity .4s}
+.tryme::after{content:"↓";display:inline-block;animation:bob 1.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+.tryme.done{opacity:0}
+.sw.pulse input{animation:swp 1.6s ease-out infinite}
+@keyframes swp{0%{box-shadow:0 0 0 0 rgba(255,160,0,.65)}70%{box-shadow:0 0 0 12px rgba(255,160,0,0)}100%{box-shadow:0 0 0 0 rgba(255,160,0,0)}}
+/* искры под заголовком */
+.spark{position:relative;width:min(40rem,100%);height:150px;margin-top:6px}
+.spark i{position:absolute;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--ember),transparent)}
+.spark .l1{left:12%;width:75%;height:2px;filter:blur(3px)}
+.spark .l2{left:12%;width:75%}
+.spark .l3{left:37%;width:25%;height:5px;filter:blur(3px);background:linear-gradient(90deg,transparent,#fff,transparent)}
+.spark .l4{left:37%;width:25%;background:linear-gradient(90deg,transparent,#fff,transparent)}
+.spark canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.spark .mask{position:absolute;inset:0;background:radial-gradient(52% 85% at 50% 0,transparent 20%,#000 100%)}
+#func .func,#future .func{margin-top:12px}
+@media (prefers-reduced-motion:reduce){.train,.conv,.scr .p3 .news,.tryme::after,.sw.pulse input{animation:none}}
+.ph.nohover{cursor:default}
+.ph.nohover .l.a{opacity:1!important;transform:none!important}
+.ph .big-ph{font-size:clamp(30px,3vw,46px)!important;line-height:.95}
+.scr .nums{position:relative;margin-top:auto;display:grid;gap:10px;color:#000}
+.scr .nums b{display:block;font:700 clamp(17px,1.6vw,24px)/1 var(--f-disp);text-transform:uppercase}
+.scr .nums span{display:block;font:400 9.5px/1.3 var(--f-body);color:#333;margin-top:3px}
+.scr .p3 .act{color:var(--ember-ink);font-weight:700}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div class="hud"><span>Атвинта · УК «Эльга»</span><span class="cnt" id="cnt">01 / 19</span></div>
+<div class="rail" id="rail" aria-hidden="true"><span class="lbl" id="rlbl"></span><span class="dot" id="rdot"></span></div>
+<div class="hint" id="hint">Листайте вниз ↓</div>
+
+<main id="deck">
+
+<section class="s" id="cover" data-name="Обложка">
+  <div class="scene"><canvas id="cv-pit"></canvas></div>
+  <div class="brandbar" aria-hidden="false"><svg class="sg" viewBox="0 0 110 110" aria-hidden="true"><path d="M93.86,16.1C83.48,5.72,69.67,0,54.98,0S26.49,5.72,16.1,16.1C5.72,26.49,0,40.3,0,54.98s5.72,28.49,16.1,38.88c10.39,10.39,24.19,16.1,38.88,16.1s28.49-5.72,38.88-16.1c10.39-10.38,16.1-24.19,16.1-38.88s-5.72-28.49-16.1-38.88ZM18.53,84.29c0,1.2-1.52,1.72-2.26,.77-6.68-8.56-10.31-19.04-10.31-30.08s3.62-21.51,10.31-30.08c.74-.95,2.26-.44,2.26,.77v58.62Zm66.53,9.4c-8.56,6.68-19.04,10.31-30.08,10.31s-21.51-3.62-30.08-10.31c-.95-.74-.44-2.26,.77-2.26h58.62c1.2,0,1.72,1.52,.77,2.26Zm-60.62-8.16V24.44h60.99v61.09H24.44ZM84.29,18.53H25.67c-1.2,0-1.72-1.52-.77-2.26,8.56-6.68,19.04-10.31,30.08-10.31s21.51,3.62,30.08,10.31c.95,.74,.44,2.26-.77,2.26Zm9.4,66.52c-.74,.95-2.26,.44-2.26-.77V25.67c0-1.2,1.52-1.72,2.26-.77,6.68,8.56,10.31,19.04,10.31,30.08s-3.62,21.51-10.31,30.08Z"/><path d="M55.08,45.62c-5.33,0-9.65,4.32-9.65,9.65s4.32,9.65,9.65,9.65,9.65-4.32,9.65-9.65-4.32-9.65-9.65-9.65Z"/></svg><i></i><svg class="wm" viewBox="137 18 205 74" role="img" aria-label="ELGA"><path d="M176.61,80.27v9.84h-39.46V19.85h39.46v9.84h-28.93v19.09h21.25v9.84h-21.25v21.65h28.93Z"/><path d="M231.31,80.27v9.84h-41.23V19.85h10.53v60.41h30.7Z"/><path d="M262.11,18.58c13.19,0,19.38,7.77,21.84,19.88h-10.53c-1.97-6.89-5.22-9.74-11.81-9.74-10.53,0-14.17,9.84-14.17,26.27s3.64,26.27,14.17,26.27c11.32,0,12.79-8.66,12.79-18.6v-.98h-15.94v-9.84h26.57v7.97c0,19.88-6.69,31.59-22.93,31.59-18.2,0-25.39-14.86-25.39-36.41s7.18-36.41,25.39-36.41Z"/><path d="M327.44,69.25h-19.88l-3.84,20.86h-10.33l13.97-70.25h20.47l14.07,70.25h-10.53l-3.94-20.86Zm-18.01-9.84h16.14l-5.31-28.73h-5.41l-5.41,28.73Z"/></svg></div>
+  <div class="w">
+    <p class="eb rv">Концепция и коммерческое предложение · 30.10.2026</p>
+    <h1 class="rv" style="--d:.1s">Масштаб виден, когда виден весь путь</h1>
+    <p class="sub rv" style="--d:.2s">Новый сайт УК «Эльга»: от&nbsp;недр Эльгинского месторождения до&nbsp;портов Азии за&nbsp;15&nbsp;секунд прокрутки</p>
+    <div class="meta rv" style="--d:.3s">
+      <p class="note">Подготовила: Атвинта</p>
+      <p class="note">Показываем идею так, как она должна работать</p>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="task" data-name="Задача">
+  <div class="w">
+    <p class="eb rv">Как мы поняли задачу</p>
+    <p class="words" id="words">Компания реализует проекты государственного масштаба, а сайт выглядит как страница небольшой местной фирмы. Новый сайт должен за&nbsp;15&nbsp;секунд показать журналисту, чиновнику или партнеру: кто такая «Эльга», чем занимается и&nbsp;насколько она большая.</p>
+    <div class="grid rv" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:52px;--d:.2s" id="task-grid">
+      <div class="card"><h3>Для кого</h3><p>Журналисты, госструктуры, партнеры и&nbsp;бизнес. Продаж и&nbsp;каталога на&nbsp;сайте нет</p></div>
+      <div class="card"><h3>Главная</h3><p>Короткая промопрезентация полного цикла: добыча, обогащение, своя дорога, свой порт, рынки</p></div>
+      <div class="card"><h3>Внутри</h3><p>Спокойные черно-белые страницы и&nbsp;блоки, которые команда включает и&nbsp;выключает сама</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="review" data-name="Разбор elga.ru">
+  <div class="w">
+    <p class="eb rv">Мини-разбор текущего сайта</p>
+    <h2 class="h2 rv" style="--d:.05s">Сильный материал уже есть, его просто не&nbsp;видно</h2>
+    <div class="cmp">
+      <div class="rv" style="--d:.15s">
+        <div class="mock-old" aria-label="Схема текущей главной elga.ru">
+          <div class="nav"><b>ELGA</b><span>О компании</span><span>Производственные активы</span><span>Продукция</span><span>Социальная ответственность</span><span>Устойчивое развитие</span><span>Карьера</span><span>Контакты</span></div>
+          <div class="pic"></div>
+        </div>
+        <p class="note" style="margin-top:14px">elga.ru сейчас: меню слева, одно фото карьера, ниже сплошной текст</p>
+      </div>
+      <div class="rows rv" style="--d:.25s">
+        <div class="row hd"><span>Сейчас</span><span></span><span>На новом сайте</span></div>
+        <div class="row"><span class="was">Одно фото и&nbsp;абзац текста</span><span class="arr">→</span><span class="now">История полного цикла за&nbsp;15&nbsp;секунд</span></div>
+        <div class="row"><span class="was">Цифры спрятаны в&nbsp;тексте</span><span class="arr">→</span><span class="now">Одна крупная цифра на&nbsp;экран</span></div>
+        <div class="row"><span class="was">Дорога и&nbsp;порт — строки в&nbsp;списке компаний</span><span class="arr">→</span><span class="now">Отдельные главы с&nbsp;анимацией</span></div>
+        <div class="row"><span class="was">Рынки — список из&nbsp;7&nbsp;портов</span><span class="arr">→</span><span class="now">Схема расстояний от&nbsp;месторождения</span></div>
+        <div class="row"><span class="was">Новости скрыты целиком</span><span class="arr">→</span><span class="now">Включаются за&nbsp;минуту, когда нужны СМИ</span></div>
+        <div class="row"><span class="was">«Продукция» как каталог</span><span class="arr">→</span><span class="now">Один экран о&nbsp;качестве угля</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="idea" data-name="Идея главной">
+  <div class="w">
+    <p class="eb rv">Идея главной страницы</p>
+    <h2 class="h2 rv" style="--d:.05s">Один маршрут связывает все активы</h2>
+    <p class="lead rv" style="--d:.1s">Одна мысль и&nbsp;одна цифра на&nbsp;экран.</p>
+    <div class="path rv" style="--d:.2s">
+      <svg viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true">
+        <path id="idea-line" d="M0 20 C150 4 250 36 400 20 S650 4 800 20 S1050 36 1200 20" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.2"/>
+        <circle r="6" fill="#ffa000"><animateMotion dur="9s" repeatCount="indefinite"><mpath href="#idea-line"/></animateMotion></circle>
+      </svg>
+      <div class="stops">
+        <div><em>01</em><b>Недра</b></div>
+        <div><em>02</em><b>Обогащение</b></div>
+        <div><em>03</em><b>Дорога</b></div>
+        <div><em>04</em><b>Порт</b></div>
+        <div><em>05</em><b>Рынки</b></div>
+        <div><em>06</em><b>Кластер</b></div>
+        <div><em>07</em><b>Компания</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="motion" data-name="Язык движения">
+  <div class="w">
+    <p class="eb rv">Язык движения</p>
+    <h2 class="h2 rv" style="--d:.05s">Анимация объясняет связь между объектами</h2>
+    <div class="grid motion rv" style="--d:.15s">
+      <div class="card"><svg class="ico i1" viewBox="0 0 240 110" aria-hidden="true"><path d="M8 88 Q118 -6 232 88"/><path class="acc" d="M8 88 Q118 -6 232 88"/><circle r="5"><animateMotion dur="3.2s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.55;1" calcMode="spline" keySplines=".5 0 .3 1;0 0 1 1" path="M8 88 Q118 -6 232 88"/></circle></svg><h3>Линия маршрута</h3><p>Ее движение ведет через главы. Зритель понимает, где он находится и&nbsp;куда идет дальше</p></div>
+      <div class="card"><svg class="ico i2" viewBox="0 0 240 110" aria-hidden="true"><defs><clipPath id="i2c"><rect x="0" y="0" width="240" height="100"/></clipPath></defs><g clip-path="url(#i2c)"><g class="zoom"><path d="M14 86 L70 30 L118 86 L160 46 L186 38 L228 86"/><line x1="14" y1="94" x2="228" y2="94"/><circle cx="186" cy="38" r="5"/></g><rect class="frame" x="166" y="20" width="40" height="36" fill="none"/></g></svg><h3>Смена масштаба</h3><p>От&nbsp;общего вида к&nbsp;конкретному объекту, затем снова показываем его место в&nbsp;системе</p></div>
+      <div class="card"><svg class="ico i3" viewBox="0 0 240 110" aria-hidden="true"><line x1="10" y1="96" x2="230" y2="96"/><line class="bar" x1="40" y1="96" x2="40" y2="62" style="--d:0s"/><line class="bar" x1="92" y1="96" x2="92" y2="44" style="--d:.15s"/><line class="bar acc" x1="150" y1="96" x2="150" y2="14" style="--d:.3s;stroke-dasharray:none"/><line class="bar" x1="205" y1="96" x2="205" y2="50" style="--d:.45s"/><circle cx="150" cy="8" r="5"/></svg><h3>Цифры в&nbsp;контексте</h3><p>Показатели появляются рядом со&nbsp;своим этапом. Значения обновляются через панель управления</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s light chap" id="ch1" data-name="Глава 1 · Недра">
+  <div class="scene live"><canvas id="cv-fog" data-dp="1"></canvas></div>
+  <div class="w">
+    <div class="top"><p class="ref">Прием: туман расходится от&nbsp;курсора, как у&nbsp;Montfort</p></div>
+    <div class="copy">
+      <p class="eb rv">Эльгинское месторождение · Якутия</p>
+      <h2 class="h2 rv" style="--d:.08s">Одно из&nbsp;крупнейших месторождений коксующегося угля в&nbsp;мире</h2>
+      <div class="facts rv" style="--d:.18s">
+        <div><b><span data-count="45">45</span>&nbsp;млн&nbsp;т</b><span>угля добыто в&nbsp;2022&nbsp;году*</span></div>
+        <div><b><span data-count="6">6</span></b><span>компаний в&nbsp;составе комплекса</span></div>
+        <div><b>2,2&nbsp;млрд&nbsp;т</b><span>запасов угля по&nbsp;оценке JORC*</span></div>
+      </div>
+      <p class="note" style="margin-top:26px">* По&nbsp;материалам компании и&nbsp;открытым источникам. На&nbsp;сайте будут актуальные цифры из&nbsp;вашего пакета данных</p>
+    </div>
+  </div>
+</section>
+
+<section class="s chap" id="ch2" data-name="Глава 2 · Обогащение">
+  <div class="scene live"><canvas id="cv-gem"></canvas></div>
+  <div class="w">
+    <div class="top"><p class="ref">Прием: кристалл собирается из&nbsp;осколков, как у&nbsp;Resn</p></div>
+    <div class="copy">
+      <p class="eb rv">Обогащение</p>
+      <h2 class="h2 rv" style="--d:.08s">Премиальный уголь с&nbsp;аномально низким содержанием серы и&nbsp;фосфора</h2>
+      <p class="lead rv" style="--d:.16s">Вместо каталога — один образ качества. Кусок угля гранится как драгоценный камень, его можно повернуть мышкой</p>
+      <p class="drag rv" style="--d:.24s">Потяните кристалл</p>
+    </div>
+  </div>
+</section>
+
+<section class="s chap" id="ch3" data-name="Глава 3 · Дорога">
+  <div class="scene"><svg id="sv-rail" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg></div>
+  <div class="w">
+    <div class="top"><p class="ref">Прием: пролет над облаками, как у&nbsp;Montfort и&nbsp;Major</p></div>
+    <div class="copy" style="margin-top:0;margin-bottom:auto;padding-top:5vh">
+      <p class="eb rv">Железная дорога «Эльга — Улак»</p>
+      <p class="big rv" style="--d:.08s"><span data-count="360">360</span><small>км</small></p>
+      <h2 class="h2 rv" style="--d:.16s;font-size:clamp(22px,2.3vw,34px)">Крупнейшая частная железная дорога России, построенная на&nbsp;средства компании</h2>
+    </div>
+  </div>
+</section>
+
+<section class="s chap" id="ch4" data-name="Глава 4 · Порт">
+  <div class="scene"><svg id="sv-port" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg></div>
+  <div class="w">
+    <div class="top"><p class="ref">Прием: кинематографичная ночная сцена, как у&nbsp;CoMinVi</p></div>
+    <div class="copy" style="margin-top:0;margin-bottom:auto;padding-top:5vh">
+      <p class="eb rv">Порт «Эльга» · Хабаровский край</p>
+      <h2 class="h2 rv" style="--d:.08s">Свой порт на&nbsp;Охотском море — прямой выход к&nbsp;Тихому океану</h2>
+      <p class="lead rv" style="--d:.16s">Тихоокеанская железная дорога связывает месторождение с&nbsp;терминалом на&nbsp;побережье. Уголь проходит весь путь по&nbsp;инфраструктуре компании</p>
+    </div>
+  </div>
+</section>
+
+<section class="s chap" id="ch5" data-name="Глава 5 · Рынки">
+  <div class="w">
+    <div class="top"><p class="ref">Прием: линии из&nbsp;точек, как глобус WeEvolveIT</p></div>
+    <div class="mk">
+      <div>
+        <p class="eb rv">Рынки сбыта</p>
+        <h2 class="h2 rv" style="--d:.08s">5&nbsp;стран Азиатско-Тихоокеанского региона</h2>
+        <p class="lead rv" style="--d:.16s">От&nbsp;Эльгинского месторождения до&nbsp;порта Пусан 2,7&nbsp;тыс.&nbsp;км, до&nbsp;Ченная&nbsp;— 10,5&nbsp;тыс.&nbsp;км. Расстояния на&nbsp;схеме в&nbsp;масштабе</p>
+      </div>
+      <svg id="sv-mk" viewBox="0 0 1000 560" role="img" aria-label="Расстояния от Эльгинского месторождения до портов пяти стран"></svg>
+    </div>
+  </div>
+</section>
+
+<section class="s chap" id="ch6c" data-name="Глава 6 · Кластер">
+  <div class="scene"><canvas id="cv-net"></canvas></div>
+  <div class="w">
+    <div class="top"><p class="ref">Прием: сфера связанных объектов кластера</p></div>
+    <div class="copy">
+      <p class="eb rv">Кластер и&nbsp;регион</p>
+      <h2 class="h2 rv" style="--d:.08s">Свой промышленно-логистический кластер на&nbsp;Дальнем Востоке</h2>
+      <p class="lead rv" style="--d:.14s">Уникальный опыт: компания построила вокруг месторождения все, что нужно для работы и&nbsp;жизни людей, и&nbsp;развивает регионы вместе с&nbsp;ними</p>
+      <div class="clus rv" style="--d:.22s">
+        <div><b>Вахтовые поселки</b><span>цифры из&nbsp;вашего пакета</span></div>
+        <div><b>Аэродром и&nbsp;рейсы</b><span>полоса, пассажиропоток</span></div>
+        <div><b>Мосты и&nbsp;станции</b><span>по&nbsp;пути дороги</span></div>
+        <div><b>Конвейер и&nbsp;причалы</b><span>в&nbsp;порту «Эльга»</span></div>
+        <div><b>Пищевые комбинаты</b><span>и&nbsp;заводы напитков</span></div>
+        <div><b>Подвижной состав</b><span>и&nbsp;портофлот</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s chap" id="ch6" data-name="Глава 7 · Компания">
+  <div class="w">
+    <div class="top"><p class="ref">Финал истории — спокойные входы в&nbsp;разделы</p></div>
+    <div class="copy" style="margin-top:6vh">
+      <h2 class="h2 rv">Главная впечатляет. Остальной сайт помогает найти информацию</h2>
+      <p class="lead rv" style="--d:.08s">Спокойная черно-белая система страниц.<br>Карьера сохраняет связку с&nbsp;промежуточным сервисом E-Staff.<br>Радио и&nbsp;газета получают согласованное место в&nbsp;структуре.<br>Русская, английская и&nbsp;китайская версии с&nbsp;согласованным составом разделов</p>
+      <div class="entries rv" style="--d:.16s">
+        <div><b>О&nbsp;компании</b><span>структура, история</span></div>
+        <div><b>Производственные активы</b><span>6&nbsp;компаний</span></div>
+        <div><b>Устойчивое развитие</b><span>экология, люди</span></div>
+        <div><b>Карьера</b><span>вакансии из&nbsp;E-Staff</span></div>
+        <div class="tg"><b>Новости</b><span>включаемый блок</span></div>
+        <div><b>Радио «Эльга»</b><span>эфир в&nbsp;один клик</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="mobile" data-name="Мобильная версия">
+  <div class="w">
+    <div class="grid" style="grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:center" id="mob-grid">
+      <div>
+        <p class="eb rv">Телефон</p>
+        <h2 class="h2 rv" style="--d:.05s">На&nbsp;телефоне та&nbsp;же история, только легче</h2>
+        <p class="lead rv" style="--d:.1s">Отдельная мобильная версия главной: короткие видео и&nbsp;картинки вместо 3D, те&nbsp;же главы и&nbsp;цифры. Быстро открывается по&nbsp;мобильной сети, ничего не&nbsp;тормозит</p>
+        <p class="note rv phint" style="--d:.2s">Наведите на&nbsp;телефон — экран сменится</p>
+      </div>
+      <div class="phones rv" style="--d:.15s">
+        <div class="ph" tabindex="0" aria-label="Обложка, при наведении — глава «Недра»"><div class="scr">
+          <div class="l a"><canvas id="cv-ph1"></canvas><div class="mini"><svg viewBox="0 0 110 110"><path d="M93.86,16.1C83.48,5.72,69.67,0,54.98,0S26.49,5.72,16.1,16.1C5.72,26.49,0,40.3,0,54.98s5.72,28.49,16.1,38.88c10.39,10.39,24.19,16.1,38.88,16.1s28.49-5.72,38.88-16.1c10.39-10.38,16.1-24.19,16.1-38.88s-5.72-28.49-16.1-38.88ZM18.53,84.29c0,1.2-1.52,1.72-2.26,.77-6.68-8.56-10.31-19.04-10.31-30.08s3.62-21.51,10.31-30.08c.74-.95,2.26-.44,2.26,.77v58.62Zm66.53,9.4c-8.56,6.68-19.04,10.31-30.08,10.31s-21.51-3.62-30.08-10.31c-.95-.74-.44-2.26,.77-2.26h58.62c1.2,0,1.72,1.52,.77,2.26Zm-60.62-8.16V24.44h60.99v61.09H24.44ZM84.29,18.53H25.67c-1.2,0-1.72-1.52-.77-2.26,8.56-6.68,19.04-10.31,30.08-10.31s21.51,3.62,30.08,10.31c.95,.74,.44,2.26-.77,2.26Zm9.4,66.52c-.74,.95-2.26,.44-2.26-.77V25.67c0-1.2,1.52-1.72,2.26-.77,6.68,8.56,10.31,19.04,10.31,30.08s-3.62,21.51-10.31,30.08Z"/><path d="M55.08,45.62c-5.33,0-9.65,4.32-9.65,9.65s4.32,9.65,9.65,9.65,9.65-4.32,9.65-9.65-4.32-9.65-9.65-9.65Z"/></svg><i></i><svg viewBox="137 18 205 74"><path d="M176.61,80.27v9.84h-39.46V19.85h39.46v9.84h-28.93v19.09h21.25v9.84h-21.25v21.65h28.93Z"/><path d="M231.31,80.27v9.84h-41.23V19.85h10.53v60.41h30.7Z"/><path d="M262.11,18.58c13.19,0,19.38,7.77,21.84,19.88h-10.53c-1.97-6.89-5.22-9.74-11.81-9.74-10.53,0-14.17,9.84-14.17,26.27s3.64,26.27,14.17,26.27c11.32,0,12.79-8.66,12.79-18.6v-.98h-15.94v-9.84h26.57v7.97c0,19.88-6.69,31.59-22.93,31.59-18.2,0-25.39-14.86-25.39-36.41s7.18-36.41,25.39-36.41Z"/><path d="M327.44,69.25h-19.88l-3.84,20.86h-10.33l13.97-70.25h20.47l14.07,70.25h-10.53l-3.94-20.86Zm-18.01-9.84h16.14l-5.31-28.73h-5.41l-5.41,28.73Z"/></svg></div><p class="m">Главная</p><p class="t">Масштаб виден, когда виден весь путь</p></div>
+          <div class="l b" style="background:linear-gradient(#0e1318,#2c3a45 55%,#6f818d)"><svg class="bg" viewBox="0 0 90 190" preserveAspectRatio="xMidYMid slice"><path d="M0 120 L12 104 L22 112 L36 94 L50 108 L64 98 L90 110 V190 H0Z" fill="#3c4a55"/><path d="M-10 132 Q45 120 100 128" fill="none" stroke="#000" stroke-width="1.4"/><g transform="translate(46 -0.6) rotate(-1.5)"><rect x="0" y="122" width="11" height="4.2" fill="#000"/><circle cx="10.4" cy="124" r=".8" fill="#fff"/><rect x="-8.5" y="122.8" width="7.5" height="3.4" fill="#111"/><rect x="-17" y="123.1" width="7.5" height="3.4" fill="#111"/></g><ellipse cx="20" cy="142" rx="38" ry="10" fill="#a9b6bf"/><ellipse cx="74" cy="146" rx="36" ry="10" fill="#cfd8de"/><ellipse cx="40" cy="160" rx="60" ry="14" fill="#e6ebee"/></svg><p class="m" style="color:#d6dde2;position:absolute;top:16px;left:14px">Дорога «Эльга — Улак»</p><p class="t big-ph" style="position:absolute;top:34px;left:14px">360&nbsp;км</p><p class="ps" style="position:absolute;top:84px;left:14px;right:12px;color:#d6dde2">Крупнейшая частная железная дорога России</p></div>
+        </div></div>
+        <div class="ph mid" tabindex="0" aria-label="Цифры месторождения, при наведении — кластер"><div class="scr">
+          <div class="l a" style="background:linear-gradient(#d9dee1,#f4f5f6);justify-content:flex-start"><svg class="bg" viewBox="0 0 90 190" preserveAspectRatio="xMidYMid slice"><path d="M0 70 L14 52 L24 62 L38 40 L52 58 L66 44 L90 62 V190 H0Z" fill="#b9c2c8"/><path d="M0 86 L18 72 L34 82 L50 68 L70 80 L90 74 V190 H0Z" fill="#9ba6ad"/><ellipse cx="30" cy="92" rx="40" ry="10" fill="#fff" opacity=".85"/><ellipse cx="72" cy="98" rx="34" ry="9" fill="#fff" opacity=".75"/><rect x="0" y="100" width="90" height="90" fill="#f4f5f6" opacity=".92"/></svg>
+            <p class="m" style="color:#5c5c5c;margin-top:4px">Эльгинское месторождение</p>
+            <div class="nums"><div><b>45&nbsp;млн&nbsp;т</b><span>угля добыто в&nbsp;2022&nbsp;году</span></div><div><b>6</b><span>компаний в&nbsp;составе комплекса</span></div><div><b>2,2&nbsp;млрд&nbsp;т</b><span>запасов угля по&nbsp;оценке JORC</span></div></div></div>
+          <div class="l b" style="background:#000"><svg class="bg" viewBox="0 0 90 190" preserveAspectRatio="xMidYMid slice"><path d="M27.9 32.6L40.5 21.0" stroke="rgba(255,255,255,0.14)" stroke-width=".35"/><path d="M100.2 72.0L103.8 51.2" stroke="rgba(255,255,255,0.16)" stroke-width=".35"/><path d="M42.3 90.2L41.8 95.2" stroke="rgba(255,255,255,0.19)" stroke-width=".35"/><path d="M67.5 55.4L78.9 47.4" stroke="rgba(255,255,255,0.07)" stroke-width=".35"/><path d="M78.9 47.4L72.2 32.5" stroke="rgba(255,255,255,0.08)" stroke-width=".35"/><path d="M69.5 74.0L58.0 65.5" stroke="rgba(255,255,255,0.08)" stroke-width=".35"/><path d="M61.4 96.4L40.3 84.2" stroke="rgba(255,255,255,0.25)" stroke-width=".35"/><path d="M40.3 84.2L51.8 59.7" stroke="rgba(255,255,255,0.27)" stroke-width=".35"/><path d="M41.8 95.2L24.4 81.3" stroke="rgba(255,255,255,0.21)" stroke-width=".35"/><path d="M24.4 81.3L22.0 64.7" stroke="rgba(255,255,255,0.23)" stroke-width=".35"/><path d="M72.0 98.4L92.1 88.5" stroke="rgba(255,255,255,0.20)" stroke-width=".35"/><path d="M42.3 61.4L50.3 50.1" stroke="rgba(255,255,255,0.08)" stroke-width=".35"/><path d="M80.9 23.5L80.9 12.2" stroke="rgba(255,255,255,0.15)" stroke-width=".35"/><path d="M97.5 31.6L96.5 20.3" stroke="rgba(255,255,255,0.17)" stroke-width=".35"/><path d="M15.8 44.4L21.5 27.4" stroke="rgba(255,255,255,0.22)" stroke-width=".35"/><path d="M55.0 9.2L62.0 4.6" stroke="rgba(255,255,255,0.18)" stroke-width=".35"/><path d="M65.7 26.7L54.8 8.6" stroke="rgba(255,255,255,0.26)" stroke-width=".35"/><path d="M50.3 50.1L43.1 36.5" stroke="rgba(255,255,255,0.08)" stroke-width=".35"/><path d="M90.9 85.8L104.0 59.9" stroke="rgba(255,255,255,0.24)" stroke-width=".35"/><path d="M41.1 75.4L28.2 76.6" stroke="rgba(255,255,255,0.14)" stroke-width=".35"/><path d="M100.2 72.0L107.0 67.5" stroke="rgba(255,255,255,0.19)" stroke-width=".35"/><path d="M107.0 67.5L108.6 43.3" stroke="rgba(255,255,255,0.21)" stroke-width=".35"/><path d="M54.6 26.8L40.5 21.0" stroke="rgba(255,255,255,0.12)" stroke-width=".35"/><path d="M79.5 89.6L87.5 76.8" stroke="rgba(255,255,255,0.14)" stroke-width=".35"/><path d="M28.2 76.6L26.6 61.0" stroke="rgba(255,255,255,0.14)" stroke-width=".35"/><path d="M26.6 61.0L18.7 46.3" stroke="rgba(255,255,255,0.15)" stroke-width=".35"/><path d="M40.3 84.2L22.0 64.7" stroke="rgba(255,255,255,0.25)" stroke-width=".35"/><path d="M81.4 64.2L93.6 57.5" stroke="rgba(255,255,255,0.10)" stroke-width=".35"/><path d="M102.7 31.2L83.6 14.8" stroke="rgba(255,255,255,0.24)" stroke-width=".35"/><path d="M22.0 64.7L33.8 38.3" stroke="rgba(255,255,255,0.26)" stroke-width=".35"/><path d="M16.4 63.1L15.8 44.4" stroke="rgba(255,255,255,0.21)" stroke-width=".35"/><path d="M62.0 89.7L55.6 80.7" stroke="rgba(255,255,255,0.12)" stroke-width=".35"/><path d="M21.5 27.4L36.5 13.6" stroke="rgba(255,255,255,0.19)" stroke-width=".35"/><path d="M93.6 57.5L89.8 40.0" stroke="rgba(255,255,255,0.11)" stroke-width=".35"/><path d="M41.8 95.2L61.4 96.4" stroke="rgba(255,255,255,0.23)" stroke-width=".35"/><path d="M50.3 50.1L61.1 40.9" stroke="rgba(255,255,255,0.07)" stroke-width=".35"/><path d="M58.0 65.5L42.3 61.4" stroke="rgba(255,255,255,0.08)" stroke-width=".35"/><path d="M90.9 85.8L75.6 77.0" stroke="rgba(255,255,255,0.26)" stroke-width=".35"/><path d="M75.6 77.0L88.0 46.0" stroke="rgba(255,255,255,0.27)" stroke-width=".35"/><path d="M80.9 23.5L64.6 16.8" stroke="rgba(255,255,255,0.13)" stroke-width=".35"/><path d="M26.6 61.0L32.8 47.5" stroke="rgba(255,255,255,0.12)" stroke-width=".35"/><path d="M65.7 26.7L83.6 14.8" stroke="rgba(255,255,255,0.26)" stroke-width=".35"/><path d="M80.9 12.2L74.4 6.0" stroke="rgba(255,255,255,0.19)" stroke-width=".35"/><path d="M32.8 47.5L27.9 32.6" stroke="rgba(255,255,255,0.13)" stroke-width=".35"/><path d="M22.0 64.7L15.8 44.4" stroke="rgba(255,255,255,0.24)" stroke-width=".35"/><path d="M16.4 63.1L18.7 46.3" stroke="rgba(255,255,255,0.18)" stroke-width=".35"/><path d="M78.9 47.4L89.8 40.0" stroke="rgba(255,255,255,0.09)" stroke-width=".35"/><path d="M93.6 57.5L103.8 51.2" stroke="rgba(255,255,255,0.14)" stroke-width=".35"/><path d="M103.8 51.2L97.5 31.6" stroke="rgba(255,255,255,0.15)" stroke-width=".35"/><path d="M61.1 40.9L72.2 32.5" stroke="rgba(255,255,255,0.08)" stroke-width=".35"/><path d="M40.5 21.0L36.5 13.6" stroke="rgba(255,255,255,0.16)" stroke-width=".35"/><path d="M87.5 76.8L81.4 64.2" stroke="rgba(255,255,255,0.11)" stroke-width=".35"/><path d="M24.4 81.3L16.4 63.1" stroke="rgba(255,255,255,0.20)" stroke-width=".35"/><path d="M75.6 77.0L51.8 59.7" stroke="rgba(255,255,255,0.27)" stroke-width=".35"/><path d="M102.7 31.2L96.5 20.3" stroke="rgba(255,255,255,0.22)" stroke-width=".35"/><path d="M54.8 8.6L62.0 4.6" stroke="rgba(255,255,255,0.22)" stroke-width=".35"/><path d="M31.9 19.0L54.8 8.6" stroke="rgba(255,255,255,0.24)" stroke-width=".35"/><path d="M69.5 74.0L81.4 64.2" stroke="rgba(255,255,255,0.09)" stroke-width=".35"/><path d="M21.5 27.4L31.9 19.0" stroke="rgba(255,255,255,0.22)" stroke-width=".35"/><path d="M32.8 47.5L43.1 36.5" stroke="rgba(255,255,255,0.10)" stroke-width=".35"/><path d="M107.0 67.5L104.0 59.9" stroke="rgba(255,255,255,0.23)" stroke-width=".35"/><path d="M64.6 16.8L55.0 9.2" stroke="rgba(255,255,255,0.15)" stroke-width=".35"/><path d="M103.8 51.2L108.6 43.3" stroke="rgba(255,255,255,0.18)" stroke-width=".35"/><path d="M83.6 14.8L74.4 6.0" stroke="rgba(255,255,255,0.23)" stroke-width=".35"/><path d="M36.5 13.6L55.0 9.2" stroke="rgba(255,255,255,0.18)" stroke-width=".35"/><path d="M79.5 89.6L92.1 88.5" stroke="rgba(255,255,255,0.18)" stroke-width=".35"/><path d="M51.8 59.7L33.8 38.3" stroke="rgba(255,255,255,0.27)" stroke-width=".35"/><path d="M59.5 95.1L42.3 90.2" stroke="rgba(255,255,255,0.16)" stroke-width=".35"/><path d="M43.1 36.5L54.6 26.8" stroke="rgba(255,255,255,0.09)" stroke-width=".35"/><path d="M104.0 59.9L88.0 46.0" stroke="rgba(255,255,255,0.26)" stroke-width=".35"/><path d="M74.4 6.0L62.0 4.6" stroke="rgba(255,255,255,0.21)" stroke-width=".35"/><path d="M96.5 20.3L80.9 12.2" stroke="rgba(255,255,255,0.18)" stroke-width=".35"/><path d="M42.3 90.2L28.2 76.6" stroke="rgba(255,255,255,0.16)" stroke-width=".35"/><path d="M59.5 95.1L72.0 98.4" stroke="rgba(255,255,255,0.18)" stroke-width=".35"/><path d="M55.6 80.7L69.5 74.0" stroke="rgba(255,255,255,0.10)" stroke-width=".35"/><path d="M58.0 65.5L67.5 55.4" stroke="rgba(255,255,255,0.07)" stroke-width=".35"/><path d="M108.6 43.3L102.7 31.2" stroke="rgba(255,255,255,0.22)" stroke-width=".35"/><path d="M72.0 98.4L61.4 96.4" stroke="rgba(255,255,255,0.22)" stroke-width=".35"/><path d="M18.7 46.3L27.9 32.6" stroke="rgba(255,255,255,0.16)" stroke-width=".35"/><path d="M33.8 38.3L31.9 19.0" stroke="rgba(255,255,255,0.25)" stroke-width=".35"/><path d="M67.5 55.4L61.1 40.9" stroke="rgba(255,255,255,0.06)" stroke-width=".35"/><path d="M62.0 89.7L59.5 95.1" stroke="rgba(255,255,255,0.15)" stroke-width=".35"/><path d="M72.2 32.5L80.9 23.5" stroke="rgba(255,255,255,0.10)" stroke-width=".35"/><path d="M55.6 80.7L41.1 75.4" stroke="rgba(255,255,255,0.11)" stroke-width=".35"/><path d="M89.8 40.0L97.5 31.6" stroke="rgba(255,255,255,0.13)" stroke-width=".35"/><path d="M92.1 88.5L90.9 85.8" stroke="rgba(255,255,255,0.22)" stroke-width=".35"/><path d="M41.1 75.4L42.3 61.4" stroke="rgba(255,255,255,0.10)" stroke-width=".35"/><path d="M54.6 26.8L64.6 16.8" stroke="rgba(255,255,255,0.11)" stroke-width=".35"/><path d="M62.0 89.7L79.5 89.6" stroke="rgba(255,255,255,0.15)" stroke-width=".35"/><path d="M87.5 76.8L100.2 72.0" stroke="rgba(255,255,255,0.15)" stroke-width=".35"/><path d="M88.0 46.0L65.7 26.7" stroke="rgba(255,255,255,0.27)" stroke-width=".35"/><path d="M33.8 38.3L31.9 19.0" stroke="#ffa000" stroke-width=".9"/><path d="M21.5 27.4L36.5 13.6" stroke="#ffa000" stroke-width=".9"/><path d="M16.4 63.1L18.7 46.3" stroke="#ffa000" stroke-width=".9"/><circle cx="62.0" cy="89.7" r="1.19" fill="rgba(255,255,255,0.46)"/><circle cx="59.5" cy="95.1" r="0.83" fill="rgba(255,255,255,0.56)"/><circle cx="55.6" cy="80.7" r="0.65" fill="rgba(255,255,255,0.36)"/><circle cx="79.5" cy="89.6" r="0.80" fill="rgba(255,255,255,0.52)"/><circle cx="42.3" cy="90.2" r="0.83" fill="rgba(255,255,255,0.55)"/><circle cx="69.5" cy="74.0" r="0.95" fill="rgba(255,255,255,0.30)"/><circle cx="72.0" cy="98.4" r="0.96" fill="rgba(255,255,255,0.69)"/><circle cx="41.1" cy="75.4" r="0.67" fill="rgba(255,255,255,0.38)"/><circle cx="87.5" cy="76.8" r="0.72" fill="rgba(255,255,255,0.43)"/><circle cx="41.8" cy="95.2" r="0.98" fill="rgba(255,255,255,0.71)"/><circle cx="58.0" cy="65.5" r="0.85" fill="rgba(255,255,255,0.24)"/><circle cx="92.1" cy="88.5" r="0.95" fill="rgba(255,255,255,0.68)"/><circle cx="28.2" cy="76.6" r="0.81" fill="rgba(255,255,255,0.53)"/><circle cx="81.4" cy="64.2" r="0.59" fill="rgba(255,255,255,0.30)"/><circle cx="61.4" cy="96.4" r="1.08" fill="rgba(255,255,255,0.82)"/><circle cx="42.3" cy="61.4" r="0.93" fill="rgba(255,255,255,0.29)"/><circle cx="100.2" cy="72.0" r="0.83" fill="rgba(255,255,255,0.56)"/><circle cx="24.4" cy="81.3" r="1.58" fill="rgba(255,255,255,0.72)"/><circle cx="67.5" cy="55.4" r="0.51" fill="rgba(255,255,255,0.21)"/><circle cx="90.9" cy="85.8" r="1.73" fill="rgba(255,255,255,0.82)"/><circle cx="26.6" cy="61.0" r="1.17" fill="rgba(255,255,255,0.45)"/><circle cx="93.6" cy="57.5" r="0.68" fill="rgba(255,255,255,0.39)"/><circle cx="40.3" cy="84.2" r="1.13" fill="rgba(255,255,255,0.87)"/><circle cx="50.3" cy="50.1" r="0.52" fill="rgba(255,255,255,0.23)"/><circle cx="107.0" cy="67.5" r="0.97" fill="rgba(255,255,255,0.71)"/><circle cx="16.4" cy="63.1" r="0.93" fill="rgba(255,255,255,0.66)"/><circle cx="78.9" cy="47.4" r="0.55" fill="rgba(255,255,255,0.26)"/><circle cx="75.6" cy="77.0" r="1.17" fill="rgba(255,255,255,0.92)"/><circle cx="32.8" cy="47.5" r="0.65" fill="rgba(255,255,255,0.36)"/><circle cx="103.8" cy="51.2" r="0.81" fill="rgba(255,255,255,0.53)"/><circle cx="22.0" cy="64.7" r="1.10" fill="rgba(255,255,255,0.85)"/><circle cx="61.1" cy="40.9" r="0.52" fill="rgba(255,255,255,0.22)"/><circle cx="104.0" cy="59.9" r="1.10" fill="rgba(255,255,255,0.84)"/><circle cx="18.7" cy="46.3" r="0.84" fill="rgba(255,255,255,0.57)"/><circle cx="89.8" cy="40.0" r="0.66" fill="rgba(255,255,255,0.37)"/><circle cx="51.8" cy="59.7" r="1.19" fill="rgba(255,255,255,0.94)"/><circle cx="43.1" cy="36.5" r="0.60" fill="rgba(255,255,255,0.31)"/><circle cx="108.6" cy="43.3" r="1.52" fill="rgba(255,255,255,0.68)"/><circle cx="15.8" cy="44.4" r="1.66" fill="rgba(255,255,255,0.77)"/><circle cx="72.2" cy="32.5" r="0.93" fill="rgba(255,255,255,0.29)"/><circle cx="88.0" cy="46.0" r="1.17" fill="rgba(255,255,255,0.92)"/><circle cx="27.9" cy="32.6" r="0.77" fill="rgba(255,255,255,0.49)"/><circle cx="97.5" cy="31.6" r="1.27" fill="rgba(255,255,255,0.52)"/><circle cx="33.8" cy="38.3" r="1.16" fill="rgba(255,255,255,0.91)"/><circle cx="54.6" cy="26.8" r="0.62" fill="rgba(255,255,255,0.33)"/><circle cx="102.7" cy="31.2" r="1.06" fill="rgba(255,255,255,0.80)"/><circle cx="21.5" cy="27.4" r="0.95" fill="rgba(255,255,255,0.68)"/><circle cx="80.9" cy="23.5" r="0.70" fill="rgba(255,255,255,0.41)"/><circle cx="65.7" cy="26.7" r="1.17" fill="rgba(255,255,255,0.92)"/><circle cx="40.5" cy="21.0" r="0.75" fill="rgba(255,255,255,0.46)"/><circle cx="96.5" cy="20.3" r="0.93" fill="rgba(255,255,255,0.66)"/><circle cx="31.9" cy="19.0" r="1.72" fill="rgba(255,255,255,0.82)"/><circle cx="64.6" cy="16.8" r="0.71" fill="rgba(255,255,255,0.43)"/><circle cx="83.6" cy="14.8" r="1.75" fill="rgba(255,255,255,0.84)"/><circle cx="36.5" cy="13.6" r="0.90" fill="rgba(255,255,255,0.63)"/><circle cx="80.9" cy="12.2" r="0.85" fill="rgba(255,255,255,0.58)"/><circle cx="54.8" cy="8.6" r="1.73" fill="rgba(255,255,255,0.83)"/><circle cx="55.0" cy="9.2" r="0.84" fill="rgba(255,255,255,0.56)"/><circle cx="74.4" cy="6.0" r="0.98" fill="rgba(255,255,255,0.72)"/><circle cx="62.0" cy="4.6" r="0.95" fill="rgba(255,255,255,0.69)"/><rect x="0" y="0" width="90" height="190" fill="url(#phfade)"/><defs><linearGradient id="phfade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset=".72" stop-color="#000" stop-opacity=".9"/></linearGradient></defs></svg><p class="m" style="color:#8c8c8c">Кластер и&nbsp;регион</p><p class="t">Свой промышленно-логистический кластер</p><p class="ps" style="color:#ffa000;font-family:var(--f-mono);letter-spacing:.04em">поселки · аэродром · мосты · порт</p></div>
+        </div></div>
+        <div class="ph" tabindex="0" aria-label="Меню, при наведении — внутренняя страница"><div class="scr">
+          <div class="l a p3"><div class="mini dark"><svg viewBox="0 0 110 110"><path d="M93.86,16.1C83.48,5.72,69.67,0,54.98,0S26.49,5.72,16.1,16.1C5.72,26.49,0,40.3,0,54.98s5.72,28.49,16.1,38.88c10.39,10.39,24.19,16.1,38.88,16.1s28.49-5.72,38.88-16.1c10.39-10.38,16.1-24.19,16.1-38.88s-5.72-28.49-16.1-38.88ZM18.53,84.29c0,1.2-1.52,1.72-2.26,.77-6.68-8.56-10.31-19.04-10.31-30.08s3.62-21.51,10.31-30.08c.74-.95,2.26-.44,2.26,.77v58.62Zm66.53,9.4c-8.56,6.68-19.04,10.31-30.08,10.31s-21.51-3.62-30.08-10.31c-.95-.74-.44-2.26,.77-2.26h58.62c1.2,0,1.72,1.52,.77,2.26Zm-60.62-8.16V24.44h60.99v61.09H24.44ZM84.29,18.53H25.67c-1.2,0-1.72-1.52-.77-2.26,8.56-6.68,19.04-10.31,30.08-10.31s21.51,3.62,30.08,10.31c.95,.74,.44,2.26-.77,2.26Zm9.4,66.52c-.74,.95-2.26,.44-2.26-.77V25.67c0-1.2,1.52-1.72,2.26-.77,6.68,8.56,10.31,19.04,10.31,30.08s-3.62,21.51-10.31,30.08Z"/><path d="M55.08,45.62c-5.33,0-9.65,4.32-9.65,9.65s4.32,9.65,9.65,9.65,9.65-4.32,9.65-9.65-4.32-9.65-9.65-9.65Z"/></svg><i></i><svg viewBox="137 18 205 74"><path d="M176.61,80.27v9.84h-39.46V19.85h39.46v9.84h-28.93v19.09h21.25v9.84h-21.25v21.65h28.93Z"/><path d="M231.31,80.27v9.84h-41.23V19.85h10.53v60.41h30.7Z"/><path d="M262.11,18.58c13.19,0,19.38,7.77,21.84,19.88h-10.53c-1.97-6.89-5.22-9.74-11.81-9.74-10.53,0-14.17,9.84-14.17,26.27s3.64,26.27,14.17,26.27c11.32,0,12.79-8.66,12.79-18.6v-.98h-15.94v-9.84h26.57v7.97c0,19.88-6.69,31.59-22.93,31.59-18.2,0-25.39-14.86-25.39-36.41s7.18-36.41,25.39-36.41Z"/><path d="M327.44,69.25h-19.88l-3.84,20.86h-10.33l13.97-70.25h20.47l14.07,70.25h-10.53l-3.94-20.86Zm-18.01-9.84h16.14l-5.31-28.73h-5.41l-5.41,28.73Z"/></svg></div><span>О&nbsp;компании</span><i></i><span class="act">Активы</span><i></i><span>Устойчивое развитие</span><i></i><span>Карьера</span><i></i><span>Новости</span><i></i><span>Контакты</span><p class="langs"><b>RU</b> EN 中文</p></div>
+          <div class="l b p3"><div class="mini dark"><svg viewBox="0 0 110 110"><path d="M93.86,16.1C83.48,5.72,69.67,0,54.98,0S26.49,5.72,16.1,16.1C5.72,26.49,0,40.3,0,54.98s5.72,28.49,16.1,38.88c10.39,10.39,24.19,16.1,38.88,16.1s28.49-5.72,38.88-16.1c10.39-10.38,16.1-24.19,16.1-38.88s-5.72-28.49-16.1-38.88ZM18.53,84.29c0,1.2-1.52,1.72-2.26,.77-6.68-8.56-10.31-19.04-10.31-30.08s3.62-21.51,10.31-30.08c.74-.95,2.26-.44,2.26,.77v58.62Zm66.53,9.4c-8.56,6.68-19.04,10.31-30.08,10.31s-21.51-3.62-30.08-10.31c-.95-.74-.44-2.26,.77-2.26h58.62c1.2,0,1.72,1.52,.77,2.26Zm-60.62-8.16V24.44h60.99v61.09H24.44ZM84.29,18.53H25.67c-1.2,0-1.72-1.52-.77-2.26,8.56-6.68,19.04-10.31,30.08-10.31s21.51,3.62,30.08,10.31c.95,.74,.44,2.26-.77,2.26Zm9.4,66.52c-.74,.95-2.26,.44-2.26-.77V25.67c0-1.2,1.52-1.72,2.26-.77,6.68,8.56,10.31,19.04,10.31,30.08s-3.62,21.51-10.31,30.08Z"/><path d="M55.08,45.62c-5.33,0-9.65,4.32-9.65,9.65s4.32,9.65,9.65,9.65,9.65-4.32,9.65-9.65-4.32-9.65-9.65-9.65Z"/></svg><i></i><svg viewBox="137 18 205 74"><path d="M176.61,80.27v9.84h-39.46V19.85h39.46v9.84h-28.93v19.09h21.25v9.84h-21.25v21.65h28.93Z"/><path d="M231.31,80.27v9.84h-41.23V19.85h10.53v60.41h30.7Z"/><path d="M262.11,18.58c13.19,0,19.38,7.77,21.84,19.88h-10.53c-1.97-6.89-5.22-9.74-11.81-9.74-10.53,0-14.17,9.84-14.17,26.27s3.64,26.27,14.17,26.27c11.32,0,12.79-8.66,12.79-18.6v-.98h-15.94v-9.84h26.57v7.97c0,19.88-6.69,31.59-22.93,31.59-18.2,0-25.39-14.86-25.39-36.41s7.18-36.41,25.39-36.41Z"/><path d="M327.44,69.25h-19.88l-3.84,20.86h-10.33l13.97-70.25h20.47l14.07,70.25h-10.53l-3.94-20.86Zm-18.01-9.84h16.14l-5.31-28.73h-5.41l-5.41,28.73Z"/></svg></div><p class="pt">Производственные активы</p><span>ООО «Эльгауголь»</span><i></i><span>ООО «Эльга-Дорога»</span><i></i><span>ООО «Эльга-Транс»</span><i></i><span>ООО «ЭльгаЛогистик»</span><i></i><span>ООО «Эльга-Майнинг»</span><i></i><span>ООО «СПС»</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s light" id="inner" data-name="Внутренние страницы">
+  <div class="w">
+    <p class="eb rv">Внутренние страницы</p>
+    <h2 class="h2 rv" style="--d:.05s">Внутри спокойно: черное, белое и&nbsp;воздух</h2>
+    <div class="inner">
+      <div class="page rv" style="--d:.12s" aria-label="Пример внутренней страницы">
+        <nav><b>ELGA</b><span>О&nbsp;компании</span><span class="a">Производственные активы</span><span>Устойчивое развитие</span><span>Карьера</span><span>Контакты</span></nav>
+        <main>
+          <h4>Производственные активы</h4>
+          <div class="co"><b>ООО «Эльгауголь»</b><span>Операционная компания, лицензия на&nbsp;недра Эльгинского месторождения</span></div>
+          <div class="co"><b>ООО «Эльга-Дорога»</b><span>Оператор частной железнодорожной линии «Эльга — Улак», 360&nbsp;км</span></div>
+          <div class="co"><b>ООО «Эльга-Транс»</b><span>Обслуживание линии и&nbsp;грузоперевозки</span></div>
+          <div class="co"><b>ООО «ЭльгаЛогистик»</b><span>Внутренние, экспортные и&nbsp;транзитные перевозки</span></div>
+          <div class="co"><b>ООО «Эльга-Майнинг»</b><span>Добыча угля и&nbsp;перевозка спецтранспортом</span></div>
+          <div class="co"><b>ООО «СПС»</b><span>Строительство транспортной и&nbsp;производственной инфраструктуры</span></div>
+        </main>
+      </div>
+      <div class="rv" style="--d:.2s">
+        <p class="eb" style="margin-bottom:12px">Предлагаем структуру</p>
+        <div class="map">
+          <div><b>О&nbsp;компании</b><span>+ качество угля</span></div>
+          <div><b>Производственные активы</b><span>схема 6&nbsp;компаний</span></div>
+          <div><b>Устойчивое развитие</b><span>+ соцответственность</span></div>
+          <div><b>Карьера</b><span>E-Staff</span></div>
+          <div class="on"><b>Новости и&nbsp;пресс-центр</b><span>включаемый</span></div>
+          <div class="on"><b>Корпоративная газета</b><span>включаемый</span></div>
+          <div class="on"><b>Акционеры</b><span>включаемый</span></div>
+          <div><b>Радио</b><span>кнопка в&nbsp;шапке</span></div>
+          <div><b>Контакты и&nbsp;документы</b><span>раскрытие информации</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="blocks" data-name="Управляемые блоки">
+  <div class="w">
+    <p class="eb rv">Управляемые блоки</p>
+    <h2 class="h2 rv" style="--d:.05s">Блок нужен СМИ — включили. Ситуация отработана — скрыли</h2>
+    <div class="tgl">
+      <div class="rv" style="--d:.12s">
+        <p class="lead" style="margin:0 0 18px">Попробуйте сами. В&nbsp;панели управления у&nbsp;каждого блока будет такой переключатель</p>
+        <p class="tryme" id="tryme">Нажмите на&nbsp;переключатель</p>
+        <label class="sw pulse" for="t-news"><span>Новости и&nbsp;пресс-центр</span><input type="checkbox" id="t-news" data-k="news"></label>
+        <label class="sw" for="t-paper"><span>Корпоративная газета</span><input type="checkbox" id="t-paper" data-k="paper"></label>
+        <label class="sw" for="t-share"><span>Состав акционеров</span><input type="checkbox" id="t-share" data-k="share"></label>
+        <label class="sw" for="t-press"><span>Для прессы</span><input type="checkbox" id="t-press" data-k="press" checked></label>
+      </div>
+      <div class="site rv" style="--d:.2s" aria-live="polite">
+        <div class="bar"><b>ELGA</b><span>О&nbsp;компании</span><span>Активы</span><span class="x" data-k="news">Новости</span><span class="x" data-k="paper">Газета</span><span class="x" data-k="share">Акционеры</span><span data-k="press">Для прессы</span><span>Карьера</span></div>
+        <div class="body">
+          <div class="blk"><b>Главная</b>Масштаб виден, когда виден весь путь</div>
+          <div class="blk x" data-k="news"><b>Новости</b>Официальное сообщение компании</div>
+          <div class="blk x" data-k="paper"><b>Газета</b>Свежий выпуск</div>
+          <div class="blk x" data-k="share"><b>Акционеры</b>Состав и&nbsp;документы</div>
+          <div class="blk" data-k="press"><b>Для прессы</b>Контакты, фото, видео</div>
+          <div class="blk"><b>Карьера</b>Вакансии</div>
+        </div>
+        <p class="foot">Выключенный блок исчезает из&nbsp;меню, с&nbsp;главной и&nbsp;по&nbsp;прямой ссылке</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="func" data-name="Функции">
+  <div class="w">
+    <p class="eb rv">Что еще будет на&nbsp;сайте</p>
+    <h2 class="h2 rv" style="--d:.05s">Сохраняем то, что работает, и&nbsp;добавляем нужное прессе</h2>
+    <div class="spark rv" style="--d:.1s" aria-hidden="true"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><canvas id="cv-spark"></canvas><span class="mask"></span></div>
+    <div class="grid func rv" style="--d:.15s">
+      <div class="card"><em>Сохраняем</em><h3>Карьера</h3><p>Вакансии и&nbsp;отклики идут через ваш промежуточный сервис E-Staff, как сейчас. Добавляем фильтры и&nbsp;удобную форму</p></div>
+      <div class="card"><em>Новое</em><h3>Радио «Эльга»</h3><p>Кнопка эфира elga.media в&nbsp;шапке или страница с&nbsp;плеером. Сайт станет еще одной точкой вещания рядом со&nbsp;стационарными</p></div>
+      <div class="card"><em>Предлагаем</em><h3>Для прессы</h3><p>Контакты пресс-службы, официальные сообщения, фото и&nbsp;видео для СМИ в&nbsp;одном месте</p></div>
+      <div class="card"><em>Опция</em><h3>Страницы событий</h3><p>Лендинги конкурсов и&nbsp;акций. Команда собирает сама, без сторонних сервисов</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="tech" data-name="Технологии">
+  <div class="w">
+    <p class="eb rv">Технологии и&nbsp;надежность</p>
+    <h2 class="h2 rv" style="--d:.05s">Красиво снаружи, просто в&nbsp;управлении внутри</h2>
+    <div class="grid tech rv" style="--d:.15s">
+      <div class="card"><h3>Ваш стек</h3><p>Vue и&nbsp;Laravel, панель управления MoonShine — как согласовали. Роли: администратор и&nbsp;гость</p></div>
+      <div class="card"><h3>Быстрая главная</h3><p>Первый экран открывается сразу, остальные сцены догружаются по&nbsp;ходу прокрутки. Без экрана загрузки на&nbsp;полминуты</p></div>
+      <div class="card"><h3>На&nbsp;вашей инфраструктуре</h3><p>Разворачиваем сайт на&nbsp;серверах ELGA и&nbsp;проходим проверку SonarQube. Зарубежные сервисы не&nbsp;используем. Подключения те&nbsp;же, что на&nbsp;текущем сайте: E-Staff и&nbsp;радио</p></div>
+      <div class="card"><h3>Текст остается текстом</h3><p>Пользователь может скопировать цифру или формулировку. Ничего не&nbsp;«зашито» в&nbsp;анимацию</p></div>
+      <div class="card"><h3>Три языка</h3><p>Русский, английский и&nbsp;китайский из&nbsp;одной панели. Разделы корпоративного назначения — только на&nbsp;русском</p></div>
+      <div class="card"><h3>Гарантия 12&nbsp;месяцев</h3><p>Год после запуска бесплатно отвечаем за&nbsp;корректную работу всего, что разработали. Условие — код сохраняется в&nbsp;версии, переданной по&nbsp;акту</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="plan" data-name="Этапы и сроки">
+  <div class="w">
+    <p class="eb rv">Этапы и&nbsp;сроки</p>
+    <h2 class="h2 rv" style="--d:.05s">Около 3&nbsp;месяцев от&nbsp;старта до&nbsp;запуска</h2>
+    <div class="gantt rv" style="--d:.12s">
+      <div class="wk"><span class="note" style="text-align:right">недели</span><div><span style="left:calc(0/13*100%)">1</span><span style="left:calc(1/13*100%)">2</span><span style="left:calc(2/13*100%)">3</span><span style="left:calc(3/13*100%)">4</span><span style="left:calc(4/13*100%)">5</span><span style="left:calc(5/13*100%)">6</span><span style="left:calc(6/13*100%)">7</span><span style="left:calc(7/13*100%)">8</span><span style="left:calc(8/13*100%)">9</span><span style="left:calc(9/13*100%)">10</span><span style="left:calc(10/13*100%)">11</span><span style="left:calc(11/13*100%)">12</span><span style="left:calc(12/13*100%)">13</span></div></div>
+      <div class="gr"><b>Аналитика и&nbsp;прототип<small>структура, раскадровка главной</small></b><div class="tr"><i class="br" style="--a:1;--b:2;--d:.1s"></i></div></div>
+      <div class="gr"><b>Дизайн и&nbsp;UI-kit<small>главная, мобильная, внутренние</small></b><div class="tr"><i class="br" style="--a:3;--b:4;--d:.25s"></i></div></div>
+      <div class="gr"><b>Графика главной<small>видео, иллюстрации, 3D</small></b><div class="tr"><i class="br e" style="--a:3;--b:6;--d:.4s"></i><i class="br o" style="--a:7;--b:8;--d:.5s;border:2px dashed var(--ember)"></i></div></div>
+      <div class="gr"><b>Разработка<small>сайт, панель, интеграции</small></b><div class="tr"><i class="br" style="--a:5;--b:10;--d:.55s"></i></div></div>
+      <div class="gr"><b>Тестирование и&nbsp;отладка<small>скорость, телефоны, браузеры</small></b><div class="tr"><i class="br" style="--a:11;--b:12;--d:.7s"></i></div></div>
+      <div class="gr"><b>Запуск<small>развертывание на&nbsp;серверах ELGA</small></b><div class="tr"><i class="br" style="--a:13;--b:13;--d:.85s"></i></div></div>
+    </div>
+    <p class="note rv" style="margin-top:22px;--d:.3s">Срок считаем с&nbsp;момента, когда получим доступы, цифры и&nbsp;материалы: фото, видео, брендбук</p>
+  </div>
+</section>
+
+<section class="s" id="cost" data-name="Стоимость">
+  <div class="w">
+    <p class="eb rv">Стоимость</p>
+    <h2 class="h2 rv" style="--d:.05s">Сайт — фиксированная цена, анимация главной — вилка</h2>
+    <div class="price">
+      <table class="est rv" style="--d:.12s">
+        <thead><tr><th>Работы</th><th>Рабочие дни</th><th>Сумма, ₽</th></tr></thead>
+        <tbody id="est-body"></tbody>
+      </table>
+      <div class="rv" style="--d:.2s">
+        <div class="var main"><p class="eb">Итого</p><p class="sum"><span class="nw" id="sum-lo"></span> –<br><span class="nw" id="sum-hi"></span></p><p>Цена зависит только от&nbsp;того, как сделаем анимацию главной. Выбираем вместе на&nbsp;этапе раскадровки</p></div>
+        <p class="note" style="margin-top:14px">Цены с&nbsp;НДС 5%. Съемка объектов не&nbsp;входит: работаем с&nbsp;вашими фото и&nbsp;видео, при необходимости организуем съемку отдельно</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="future" data-name="Задел на будущее">
+  <div class="w">
+    <p class="eb rv">Задел на&nbsp;будущее</p>
+    <h2 class="h2 rv" style="--d:.05s">Что можно сделать после запуска</h2>
+    <div class="spark rv" style="--d:.1s" aria-hidden="true"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><canvas></canvas><span class="mask"></span></div>
+    <p class="lead rv" style="--d:.1s">В&nbsp;эту оценку не&nbsp;входит. Обсудим, когда сайт заработает</p>
+    <div class="grid func rv" style="--d:.18s">
+      <div class="card"><h3>Портал для сотрудников</h3><p>Газета, радио и&nbsp;объявления в&nbsp;одном месте, вход по&nbsp;корпоративной учетной записи</p></div>
+      <div class="card"><h3>HR-бот в&nbsp;MAX или Telegram</h3><p>Вакансии из&nbsp;E-Staff и&nbsp;прием откликов прямо в&nbsp;мессенджере</p></div>
+      <div class="card"><h3>Медиабанк для СМИ</h3><p>Фото и&nbsp;видео с&nbsp;объектов с&nbsp;поиском и&nbsp;скачиванием для журналистов</p></div>
+      <div class="card"><h3>Карта инфраструктуры</h3><p>Интерактивная карта кластера: мосты, станции, поселки, аэродром, порт с&nbsp;живыми цифрами</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="close" data-name="Контакты">
+  <div class="scene"><canvas id="cv-pit2"></canvas></div>
+  <div class="brandbar" aria-hidden="false"><svg class="sg" viewBox="0 0 110 110" aria-hidden="true"><path d="M93.86,16.1C83.48,5.72,69.67,0,54.98,0S26.49,5.72,16.1,16.1C5.72,26.49,0,40.3,0,54.98s5.72,28.49,16.1,38.88c10.39,10.39,24.19,16.1,38.88,16.1s28.49-5.72,38.88-16.1c10.39-10.38,16.1-24.19,16.1-38.88s-5.72-28.49-16.1-38.88ZM18.53,84.29c0,1.2-1.52,1.72-2.26,.77-6.68-8.56-10.31-19.04-10.31-30.08s3.62-21.51,10.31-30.08c.74-.95,2.26-.44,2.26,.77v58.62Zm66.53,9.4c-8.56,6.68-19.04,10.31-30.08,10.31s-21.51-3.62-30.08-10.31c-.95-.74-.44-2.26,.77-2.26h58.62c1.2,0,1.72,1.52,.77,2.26Zm-60.62-8.16V24.44h60.99v61.09H24.44ZM84.29,18.53H25.67c-1.2,0-1.72-1.52-.77-2.26,8.56-6.68,19.04-10.31,30.08-10.31s21.51,3.62,30.08,10.31c.95,.74,.44,2.26-.77,2.26Zm9.4,66.52c-.74,.95-2.26,.44-2.26-.77V25.67c0-1.2,1.52-1.72,2.26-.77,6.68,8.56,10.31,19.04,10.31,30.08s-3.62,21.51-10.31,30.08Z"/><path d="M55.08,45.62c-5.33,0-9.65,4.32-9.65,9.65s4.32,9.65,9.65,9.65,9.65-4.32,9.65-9.65-4.32-9.65-9.65-9.65Z"/></svg><i></i><svg class="wm" viewBox="137 18 205 74" role="img" aria-label="ELGA"><path d="M176.61,80.27v9.84h-39.46V19.85h39.46v9.84h-28.93v19.09h21.25v9.84h-21.25v21.65h28.93Z"/><path d="M231.31,80.27v9.84h-41.23V19.85h10.53v60.41h30.7Z"/><path d="M262.11,18.58c13.19,0,19.38,7.77,21.84,19.88h-10.53c-1.97-6.89-5.22-9.74-11.81-9.74-10.53,0-14.17,9.84-14.17,26.27s3.64,26.27,14.17,26.27c11.32,0,12.79-8.66,12.79-18.6v-.98h-15.94v-9.84h26.57v7.97c0,19.88-6.69,31.59-22.93,31.59-18.2,0-25.39-14.86-25.39-36.41s7.18-36.41,25.39-36.41Z"/><path d="M327.44,69.25h-19.88l-3.84,20.86h-10.33l13.97-70.25h20.47l14.07,70.25h-10.53l-3.94-20.86Zm-18.01-9.84h16.14l-5.31-28.73h-5.41l-5.41,28.73Z"/></svg></div>
+  <div class="w">
+    <p class="eb rv">Следующий шаг</p>
+    <h2 class="h2 rv" style="--d:.05s;font-size:clamp(34px,4.6vw,72px)">Покажем главную в&nbsp;движении на&nbsp;встрече</h2>
+    <div class="contacts rv" style="--d:.18s">
+      <div><b>Оксана Денисенко</b><span>руководитель группы, Атвинта</span></div>
+      <div><b>od@atwinta.ru</b><span>почта</span></div>
+      <div><b class="nw">+7 909 520-00-30</b><span>телефон</span></div>
+    </div>
+    <a class="totop rv" style="--d:.26s" href="#cover" id="totop">В&nbsp;начало ↑</a>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce&&'IntersectionObserver' in window) root.classList.add('anim');
+  var slides=[].slice.call(document.querySelectorAll('.s'));
+  var N=slides.length, cur=-1;
+  var cnt=document.getElementById('cnt'), rail=document.getElementById('rail'), rdot=document.getElementById('rdot'), rlbl=document.getElementById('rlbl'), hint=document.getElementById('hint');
+  var deck=document.getElementById('deck');
+  slides.forEach(function(s,i){var a=document.createElement('span');a.className='snap';a.style.top=(i*window.innerHeight)+'px';a.setAttribute('aria-hidden','true');deck.appendChild(a);});
+  slides.forEach(function(s,i){var t=document.createElement('i');t.style.top=(i/(N-1)*100)+'%';rail.appendChild(t);});
+  function pad(n){return (n<10?'0':'')+n}
+  function sticky(){return getComputedStyle(slides[1]).position==='sticky'}
+  function current(){
+    if(window.__only!=null) return window.__only;
+    var y=window.scrollY, h=window.innerHeight;
+    if(sticky()) return Math.max(0,Math.min(N-1,Math.round(y/h)));
+    var k=0; for(var i=0;i<N;i++){ if(slides[i].offsetTop<=y+h*.5) k=i; } return k;
+  }
+  var words=document.getElementById('words');
+  if(words){
+    var parts=words.innerHTML.split(/(\s+)/);
+    words.innerHTML=parts.map(function(p){return /^\s+$/.test(p)?p:'<span>'+p+'</span>'}).join('');
+  }
+  var wordTimer=null;
+  function lightWords(){
+    if(!words||wordTimer) return;
+    var sp=words.querySelectorAll('span'), i=0;
+    wordTimer=setInterval(function(){ if(i>=sp.length){clearInterval(wordTimer);return;} sp[i++].classList.add('lit'); },55);
+  }
+  function countUp(slide){
+    slide.querySelectorAll('[data-count]').forEach(function(el){
+      if(el.dataset.done) return; el.dataset.done=1;
+      var to=+el.dataset.count, t0=performance.now(), d=1400;
+      if(reduce){el.textContent=to;return;}
+      (function step(t){var p=Math.min(1,(t-t0)/d);p=1-Math.pow(1-p,3);el.textContent=Math.round(to*p);if(p<1)requestAnimationFrame(step);})(t0);
+    });
+  }
+  function activate(i){
+    if(i===cur) return; cur=i;
+    var s=slides[i]; s.classList.add('on');
+    if(slides[i+1]&&!sticky()) {}
+    cnt.textContent=pad(i+1)+' / '+pad(N);
+    var top=(i/(N-1)*100)+'%'; rdot.style.top=top; rlbl.style.top=top; rlbl.textContent=s.dataset.name||'';
+    if(s.id==='task') lightWords();
+    if(s.id==='blocks'&&window.__demoToggles) window.__demoToggles();
+    countUp(s);
+    hint.classList.toggle('off',i>0);
+  }
+  var ticking=false;
+  function onScroll(){
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(function(){
+      ticking=false;
+      var i=current(); activate(i);
+      if(sticky()&&!reduce){
+        var h=window.innerHeight, y=window.scrollY;
+        for(var k=0;k<N;k++){
+          var p=y/h-k; var s=slides[k];
+          if(p>0&&p<1.02){ s.style.transform='scale('+(1-.06*p)+')'; s.style.filter='brightness('+(1-.55*p)+')'; }
+          else if(s.style.transform){ s.style.transform=''; s.style.filter=''; }
+        }
+      }
+    });
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',function(){document.querySelectorAll('.snap').forEach(function(a,i){a.style.top=(i*window.innerHeight)+'px';});onScroll();});
+  activate(0); onScroll();
+  document.getElementById('totop').addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});});
+  document.addEventListener('keydown',function(e){
+    if(/INPUT|TEXTAREA|SELECT/.test((e.target||{}).tagName||'')) return;
+    var k=e.key, d=0;
+    if(k==='Home'){e.preventDefault();window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});return;}
+    if(k==='ArrowDown'||k==='PageDown'||k===' ') d=1; else if(k==='ArrowUp'||k==='PageUp') d=-1; else return;
+    e.preventDefault();
+    var j=Math.max(0,Math.min(N-1,current()+d));
+    window.scrollTo({top:sticky()?j*window.innerHeight:slides[j].offsetTop,behavior:reduce?'auto':'smooth'});
+  });
+
+  /* scenes: run only when near view */
+  var scenes=[];
+  function vis(el){var i=slides.indexOf(el);var c=current();return i===c||i===c+1||i===c-1;}
+  function loop(t){scenes.forEach(function(sc){ if(vis(sc.slide)) sc.draw(t); });requestAnimationFrame(loop);}
+  function fit(cv){var r=cv.getBoundingClientRect(),dp=Math.min(cv.dataset.dp?+cv.dataset.dp:1.5,window.devicePixelRatio||1);var w=Math.max(1,Math.round(r.width*dp)),h=Math.max(1,Math.round(r.height*dp));if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}return dp;}
+  var mouse={x:.5,y:.5,tx:.5,ty:.5,px:-9999,py:-9999};
+  window.addEventListener('pointermove',function(e){mouse.tx=e.clientX/window.innerWidth;mouse.ty=e.clientY/window.innerHeight;mouse.px=e.clientX;mouse.py=e.clientY;},{passive:true});
+  function rnd(a){var s=a;return function(){s=(s*16807)%2147483647;return (s-1)/2147483646;}}
+
+  /* topo: фирменный узор — горизонтали разреза по шумовому рельефу, линии стекают внутрь, под курсором оранжевые */
+  function topo(cv,opts){
+    var slide=cv.closest('.s'), seed=opts.seed||7, drawn=false, mask=null, field=null, gw=0, gh=0, cell=0, bw=0, bh=0, t0=null, lastDraw=0;
+    function hash(i,j){var h=Math.sin(i*127.1+j*311.7+seed*17.3)*43758.5453;return h-Math.floor(h);}
+    function vn(x,y){var i=Math.floor(x),j=Math.floor(y),fx=x-i,fy=y-j,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy),a=hash(i,j),b=hash(i+1,j),c=hash(i,j+1),d=hash(i+1,j+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+    function fbm(x,y){var s=0,a=.5,f=1;for(var o=0;o<5;o++){s+=a*vn(x*f,y*f);f*=2.07;a*=.5;}return s;}
+    function build(W,H,dp){
+      cell=Math.max(4,Math.round(6*dp)); gw=Math.ceil(W/cell)+2; gh=Math.ceil(H/cell)+2; field=new Float32Array(gw*gh); mask=new Uint8Array(gw*gh); bw=W; bh=H;
+      var narrow=W/dp<900, pits=narrow?opts.m:opts.d, S=Math.max(W,H);
+      for(var j=0;j<gh;j++)for(var i=0;i<gw;i++){
+        var nx=i*cell/S, ny=j*cell/S;
+        var wx=nx+.22*(fbm(nx*2.6+5.2,ny*2.6+1.3)-.5), wy=ny+.22*(fbm(nx*2.6+8.1,ny*2.6+3.7)-.5);
+        var h=0, inf=0;
+        for(var k=0;k<pits.length;k++){var p=pits[k],dx=(wx-p[0]*W/S)/p[2],dy=(wy-p[1]*H/S)/(p[2]*p[3]),e=dx*dx+dy*dy;h-=p[4]*Math.exp(-e*1.6);inf=Math.max(inf,Math.exp(-e*.32));}
+        h+=fbm(wx*3.2,wy*3.2)*(.25+.55*inf);
+        field[j*gw+i]=h; mask[j*gw+i]=inf>.2?1:0;
+      }
+    }
+    var STEP=opts.step||.034;
+    scenes.push({slide:slide,draw:function(t){
+      if(t-lastDraw<30&&!reduce) return; lastDraw=t; if(t0===null) t0=t;
+      var dp=fit(cv),c=cv.getContext('2d'),W=cv.width,H=cv.height;
+      if(opts.still&&drawn&&field&&bw===W&&bh===H) return;
+      if(!field||bw!==W||bh!==H) build(W,H,dp);
+      c.fillStyle='#000'; c.fillRect(0,0,W,H);
+      var off=(reduce||opts.still)?0:(t-t0)*.0000045, fade=(reduce||opts.still)?1:Math.min(1,(t-t0)/1400);
+      var r=cv.getBoundingClientRect(), mx=(mouse.px-r.left)*dp, my=(mouse.py-r.top)*dp, rad=opts.still?0:230*dp, rad2=rad*rad;
+      var P=[[],[],[],[]];
+      for(var j=0;j<gh-1;j++){var y0=j*cell;for(var i=0;i<gw-1;i++){
+        var x0=i*cell, a=(field[j*gw+i]+off)/STEP, b=(field[j*gw+i+1]+off)/STEP, cc=(field[(j+1)*gw+i+1]+off)/STEP, d=(field[(j+1)*gw+i]+off)/STEP;
+        if(!mask[j*gw+i]) continue; var lo=Math.floor(Math.min(a,b,cc,d)), hi=Math.floor(Math.max(a,b,cc,d)); if(lo===hi) continue;
+        for(var L=lo+1;L<=hi;L++){
+          var pts=[];
+          if((a-L)*(b-L)<0) pts.push(x0+cell*(L-a)/(b-a), y0);
+          if((b-L)*(cc-L)<0) pts.push(x0+cell, y0+cell*(L-b)/(cc-b));
+          if((d-L)*(cc-L)<0) pts.push(x0+cell*(L-d)/(cc-d), y0+cell);
+          if((a-L)*(d-L)<0) pts.push(x0, y0+cell*(L-a)/(d-a));
+          if(pts.length<4) continue;
+          var bold=((L%6)+6)%6===0, dx=pts[0]-mx, dy=pts[1]-my, near=dx*dx+dy*dy<rad2, q=P[(near?2:0)+(bold?1:0)];
+          q.push(pts[0],pts[1],pts[2],pts[3]); if(pts.length===8) q.push(pts[4],pts[5],pts[6],pts[7]);
+        }
+      }}
+      var st=[['rgba(255,255,255,'+(.2*fade)+')',1],['rgba(255,255,255,'+(.46*fade)+')',1.5],['rgba(255,160,0,'+(.75*fade)+')',1.1],['rgba(255,160,0,1)',1.7]];
+      for(var n=0;n<4;n++){var q=P[n]; if(!q.length) continue; c.beginPath(); for(var m=0;m<q.length;m+=4){c.moveTo(q[m],q[m+1]);c.lineTo(q[m+2],q[m+3]);} c.strokeStyle=st[n][0]; c.lineWidth=st[n][1]*dp; c.stroke();} drawn=true;
+      if(opts.shade){var narrow=W/dp<900, gr=c.createLinearGradient(0,0,narrow?0:W*.7,narrow?H:0);
+        gr.addColorStop(0,'rgba(0,0,0,.82)'); gr.addColorStop(narrow?.6:.45,'rgba(0,0,0,.25)'); gr.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=gr; c.fillRect(0,0,W,H);}
+    }});
+  }
+  topo(document.getElementById('cv-pit'),{seed:11,shade:true,d:[[.8,.4,.2,.9,1.3],[1.02,.98,.13,1.2,.8],[.5,-.05,.1,1,.5]],m:[[.62,.28,.3,1,1.2],[1.05,.9,.2,1,.7]]});
+  topo(document.getElementById('cv-pit2'),{seed:29,shade:true,d:[[.9,.75,.22,.8,1.2],[.55,1.08,.12,1,.6]],m:[[.7,.85,.32,1,1.1]]});
+  topo(document.getElementById('cv-ph1'),{still:true,seed:53,step:.05,d:[[.6,.55,.5,1,1.2]],m:[[.65,.5,.55,1.2,1.2],[.1,.05,.3,1,.6]]});
+
+  /* сфера-сеть кластера: узлы на сфере, связи между соседями, оранжевые импульсы по связям */
+  (function(){
+    var cv=document.getElementById('cv-net'); if(!cv) return; var slide=cv.closest('.s');
+    var N=90, V=[], E=[], ga=Math.PI*(3-Math.sqrt(5)), Rr=rnd(17);
+    for(var i=0;i<N;i++){var y=1-(i/(N-1))*2, r=Math.sqrt(1-y*y), th=ga*i; V.push([Math.cos(th)*r*(1+(Rr()-.5)*.06), y, Math.sin(th)*r*(1+(Rr()-.5)*.06)]);}
+    var seen={};
+    V.forEach(function(v,i){var d=V.map(function(w,j){return [j,(v[0]-w[0])*(v[0]-w[0])+(v[1]-w[1])*(v[1]-w[1])+(v[2]-w[2])*(v[2]-w[2])];}).sort(function(a,b){return a[1]-b[1];});
+      for(var k=1;k<=3;k++){var j=d[k][0], key=i<j?i+'-'+j:j+'-'+i; if(!seen[key]){seen[key]=1;E.push([i,j]);}}});
+    var pulses=[]; for(var q=0;q<14;q++) pulses.push({e:Math.floor(Rr()*E.length),u:Rr(),sp:.0004+Rr()*.0006});
+    var ph=V.map(function(){return Rr()*6.28;}), big=V.map(function(){return Rr()<.18;});
+    var rotY=0, rotX=-.25, last=null;
+    scenes.push({slide:slide,draw:function(t){
+      var dt=last?Math.min(50,t-last):16; last=t; if(reduce) dt=0;
+      var dp=fit(cv), c=cv.getContext('2d'), W=cv.width, H=cv.height, narrow=W/dp<900;
+      c.fillStyle='#000'; c.fillRect(0,0,W,H);
+      rotY+=dt*.00012; var tx=-.25+(mouse.y-.5)*.35, tyo=(mouse.x-.5)*.5; rotX+=(tx-rotX)*.04;
+      var cx=W*(narrow?.7:.8), cy=H*(narrow?.24:.4), S=Math.min(W,H)*(narrow?.42:.46);
+      var cyr=Math.cos(rotY+tyo), syr=Math.sin(rotY+tyo), cxr=Math.cos(rotX), sxr=Math.sin(rotX);
+      var P=V.map(function(v){var x=v[0]*cyr+v[2]*syr, z=-v[0]*syr+v[2]*cyr, y=v[1]*cxr-z*sxr; z=v[1]*sxr+z*cxr; var per=2.6/(2.6-z); return [cx+x*S*per, cy+y*S*per, z];});
+      c.lineWidth=dp;
+      E.forEach(function(e){var a=P[e[0]], b=P[e[1]], z=(a[2]+b[2])/2, al=.05+.22*((z+1)/2);
+        c.strokeStyle='rgba(255,255,255,'+al.toFixed(3)+')'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b[0],b[1]); c.stroke();});
+      pulses.forEach(function(p){ p.u+=p.sp*dt; if(p.u>1){p.u=0;p.e=Math.floor(Math.random()*E.length);}
+        var e=E[p.e], a=P[e[0]], b=P[e[1]], z=(a[2]+b[2])/2; if(z<-.2) return;
+        var x=a[0]+(b[0]-a[0])*p.u, y=a[1]+(b[1]-a[1])*p.u, x0=a[0]+(b[0]-a[0])*Math.max(0,p.u-.25), y0=a[1]+(b[1]-a[1])*Math.max(0,p.u-.25);
+        var g=c.createLinearGradient(x0,y0,x,y); g.addColorStop(0,'rgba(255,160,0,0)'); g.addColorStop(1,'rgba(255,160,0,.95)');
+        c.strokeStyle=g; c.lineWidth=1.8*dp; c.beginPath(); c.moveTo(x0,y0); c.lineTo(x,y); c.stroke();
+        c.beginPath(); c.arc(x,y,2.2*dp,0,6.283); c.fillStyle='#ffa000'; c.fill();});
+      c.lineWidth=dp;
+      P.forEach(function(p,i){var depth=(p[2]+1)/2, pulse=reduce?1:.75+.25*Math.sin(t*.002+ph[i]), r=(big[i]?3.4:1.8)*dp*(.55+.6*depth)*pulse;
+        c.beginPath(); c.arc(p[0],p[1],r,0,6.283); c.fillStyle='rgba(255,255,255,'+(.15+.8*depth).toFixed(3)+')'; c.fill();
+        if(big[i]&&depth>.55){c.beginPath(); c.arc(p[0],p[1],r*3.2,0,6.283); c.fillStyle='rgba(255,255,255,'+(.06*depth).toFixed(3)+')'; c.fill();}});
+      var gr=c.createLinearGradient(0,0,narrow?0:W*.62,narrow?H:0); gr.addColorStop(0,'rgba(0,0,0,.92)'); gr.addColorStop(narrow?.55:.55,'rgba(0,0,0,.45)'); gr.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=gr; c.fillRect(0,0,W,H);
+    }});
+  })();
+
+  /* fog over taiga ridges, pushed by cursor */
+  (function(){
+    var cv=document.getElementById('cv-fog'), slide=cv.closest('.s'), R=rnd(5), P=[], spr=null, ridges=[];
+    function sprite(){var s=document.createElement('canvas');s.width=s.height=256;var c=s.getContext('2d');var g=c.createRadialGradient(128,128,0,128,128,128);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.5,'rgba(255,255,255,.45)');g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(0,0,256,256);return s;}
+    for(var i=0;i<4;i++){var pts=[];for(var j=0;j<=24;j++)pts.push(R());ridges.push(pts);}
+    for(var k=0;k<46;k++) P.push({x:R(),y:.3+R()*.75,r:.12+R()*.2,vx:0,vy:0,s:.00002+R()*.00005});
+    scenes.push({slide:slide,draw:function(t){
+      var dp=fit(cv),c=cv.getContext('2d'),W=cv.width,H=cv.height; if(!spr) spr=sprite();
+      var sky=c.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#dde2e5'); sky.addColorStop(1,'#f1f3f4'); c.fillStyle=sky; c.fillRect(0,0,W,H);
+      var cols=['#b9c2c8','#9ba6ad','#7f8a92','#5b656c'];
+      ridges.forEach(function(r,i){
+        var base=H*(.34+i*.1), amp=H*(.16-i*.025);
+        c.beginPath(); c.moveTo(0,H);
+        for(var j=0;j<r.length;j++){var x=j/(r.length-1)*W;var y=base-amp*Math.pow(r[j],1.6)+Math.sin(j*1.7+i)*amp*.12;c.lineTo(x,y);}
+        c.lineTo(W,H); c.closePath(); c.fillStyle=cols[i]; c.fill();
+        if(i===3){c.fillStyle='rgba(30,36,40,.35)';for(var q=0;q<220;q++){var x2=(q*97.3%1000)/1000*W,y2=base+((q*53.1)%100)/100*H*.5;c.fillRect(x2,y2,2*dp,6*dp);}}
+      });
+      var r=cv.getBoundingClientRect(), mx=(mouse.px-r.left)*dp, my=(mouse.py-r.top)*dp, rad=240*dp;
+      P.forEach(function(p){
+        var x=p.x*W, y=p.y*H, dx=x-mx, dy=y-my, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<rad&&d>1){var f=(1-d/rad)*1.6;p.vx+=dx/d*f/W*dp*2;p.vy+=dy/d*f/H*dp*2;}
+        p.vx*=.93;p.vy*=.93;p.x+=p.vx+(reduce?0:p.s);p.y+=p.vy;
+        if(p.x>1.25)p.x=-.25; if(p.x<-.3)p.x=1.2; if(p.y<.15)p.y+=.02; if(p.y>1.15)p.y-=.02;
+        var s=p.r*Math.max(W,H); c.globalAlpha=.85; c.drawImage(spr,x-s/2,y-s/2,s,s);
+      });
+      c.globalAlpha=1;
+      var g=c.createLinearGradient(0,H*.45,0,H); g.addColorStop(0,'rgba(244,244,242,0)'); g.addColorStop(1,'rgba(244,244,242,.9)'); c.fillStyle=g; c.fillRect(0,0,W,H);
+    }});
+  })();
+
+  /* coal gem: shards fly in and assemble, rotate by cursor and drag */
+  (function(){
+    var cv=document.getElementById('cv-gem'), slide=cv.closest('.s'), R=rnd(3);
+    var f=(1+Math.sqrt(5))/2, V=[[-1,f,0],[1,f,0],[-1,-f,0],[1,-f,0],[0,-1,f],[0,1,f],[0,-1,-f],[0,1,-f],[f,0,-1],[f,0,1],[-f,0,-1],[-f,0,1]];
+    var F=[];
+    for(var a=0;a<12;a++)for(var b=a+1;b<12;b++)for(var c2=b+1;c2<12;c2++){
+      var d=function(p,q){return Math.hypot(V[p][0]-V[q][0],V[p][1]-V[q][1],V[p][2]-V[q][2]);};
+      if(Math.abs(d(a,b)-2)<.01&&Math.abs(d(b,c2)-2)<.01&&Math.abs(d(a,c2)-2)<.01) F.push([a,b,c2]);
+    }
+    var NV=[];V.forEach(function(v){NV.push(v);});
+    var F2=[];
+    F.forEach(function(fc){
+      var m=[0,1,2].map(function(i){var p=V[fc[i]],q=V[fc[(i+1)%3]];return [(p[0]+q[0])/2,(p[1]+q[1])/2,(p[2]+q[2])/2];});
+      var idx=m.map(function(p){var L=Math.hypot(p[0],p[1],p[2])/Math.hypot(1,f);NV.push([p[0]/L,p[1]/L,p[2]/L]);return NV.length-1;});
+      F2.push([fc[0],idx[0],idx[2]],[fc[1],idx[1],idx[0]],[fc[2],idx[2],idx[1]],[idx[0],idx[1],idx[2]]);
+    });
+    var P=NV.map(function(v){var j=.86+R()*.28;return [v[0]*j*1.05,v[1]*j*.92,v[2]*j];});
+    var shards=F2.map(function(){return {dx:(R()-.5)*7,dy:(R()-.5)*7,dz:(R()-.5)*7,rot:(R()-.5)*6};});
+    var rx=.35, ry=0, vx=0, vy=.004, drag=null, t0=null, prog=0, lastG=null, myIdx=slides.indexOf(slide);
+    var L=[-.45,-.62,.64]; var ln=Math.hypot(L[0],L[1],L[2]); L=L.map(function(x){return x/ln;});
+    cv.addEventListener('pointerdown',function(e){drag={x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+    cv.addEventListener('pointermove',function(e){if(!drag)return;vy=(e.clientX-drag.x)*.0009;vx=(e.clientY-drag.y)*.0009;ry+=vy*4;rx+=vx*4;drag={x:e.clientX,y:e.clientY};});
+    window.addEventListener('pointerup',function(){drag=null;});
+    scenes.push({slide:slide,draw:function(t){
+      var dtg=lastG===null?16:Math.min(60,t-lastG); lastG=t;
+      var here=current()===myIdx;
+      prog=reduce?(here?1:0):Math.max(0,Math.min(1,prog+(here?1:-1.3)*dtg/1900));
+      var dp=fit(cv),c=cv.getContext('2d'),W=cv.width,H=cv.height, narrow=W/dp<900;
+      c.fillStyle='#000000'; c.fillRect(0,0,W,H);
+      var gl=c.createRadialGradient(W*(narrow?.5:.68),H*(narrow?.32:.5),0,W*(narrow?.5:.68),H*(narrow?.32:.5),Math.max(W,H)*.45);
+      gl.addColorStop(0,'rgba(120,135,148,.16)'); gl.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=gl; c.fillRect(0,0,W,H);
+      if(!drag){ vy+=(.0035-vy)*.02; vx*=.95; ry+=reduce?0:vy; rx+=vx; rx+=((mouse.y-.5)*.8+.3-rx)*.01; }
+      var asm=prog<.5?4*prog*prog*prog:1-Math.pow(-2*prog+2,3)/2;
+      var cx=W*(narrow?.5:.68), cy=H*(narrow?.32:.5), S=Math.min(W,H)*(narrow?.13:.155);
+      var cyr=Math.cos(ry),syr=Math.sin(ry),cxr=Math.cos(rx),sxr=Math.sin(rx);
+      function tr(p){var x=p[0]*cyr+p[2]*syr, z=-p[0]*syr+p[2]*cyr, y=p[1]*cxr-z*sxr; z=p[1]*sxr+z*cxr; return [x,y,z];}
+      var list=[];
+      F2.forEach(function(fc,i){
+        var sh=shards[i], k=1-asm;
+        var pts=fc.map(function(vi){var p=P[vi];return [p[0]+sh.dx*k,p[1]+sh.dy*k,p[2]+sh.dz*k];});
+        var Tp=pts.map(tr);
+        var u=[Tp[1][0]-Tp[0][0],Tp[1][1]-Tp[0][1],Tp[1][2]-Tp[0][2]], v=[Tp[2][0]-Tp[0][0],Tp[2][1]-Tp[0][1],Tp[2][2]-Tp[0][2]];
+        var n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]]; var nl=Math.hypot(n[0],n[1],n[2])||1; n=n.map(function(x){return x/nl;});
+        var cen=[(Tp[0][0]+Tp[1][0]+Tp[2][0])/3,(Tp[0][1]+Tp[1][1]+Tp[2][1])/3,(Tp[0][2]+Tp[1][2]+Tp[2][2])/3];
+        if(n[0]*cen[0]+n[1]*cen[1]+n[2]*cen[2]<0) n=n.map(function(x){return -x;});
+        list.push({p:Tp,z:cen[2],n:n});
+      });
+      list.sort(function(a,b){return a.z-b.z;});
+      list.forEach(function(o){
+        var dif=Math.max(0,o.n[0]*L[0]+o.n[1]*L[1]+o.n[2]*L[2]);
+        var hx=L[0],hy=L[1],hz=L[2]+1,hl=Math.hypot(hx,hy,hz);var spec=Math.pow(Math.max(0,(o.n[0]*hx+o.n[1]*hy+o.n[2]*hz)/hl),24);
+        var g=Math.round(10+Math.pow(dif,1.7)*120+spec*90), b=Math.round(g*1.08+4);
+        c.beginPath();
+        o.p.forEach(function(q,i){var per=3.2/(3.2-q[2]*.35);var X=cx+q[0]*S*per, Y=cy+q[1]*S*per; i?c.lineTo(X,Y):c.moveTo(X,Y);});
+        c.closePath(); c.fillStyle='rgb('+g+','+Math.round(g*1.04)+','+b+')'; c.fill();
+        c.strokeStyle='rgba(220,230,236,'+(.05+dif*.16)+')'; c.lineWidth=dp*.8; c.stroke();
+      });
+    }});
+  })();
+
+  /* railway over clouds */
+  (function(){
+    var sv=document.getElementById('sv-rail'), slide=sv.closest('.s'), NS='http://www.w3.org/2000/svg';
+    function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);(p||sv).appendChild(e);return e;}
+    var defs=el('defs',{});
+    var lg=el('linearGradient',{id:'sky',x1:0,y1:0,x2:0,y2:1},defs);
+    var bl=el('filter',{id:'cb',x:'-20%',y:'-50%',width:'140%',height:'200%'},defs);el('feGaussianBlur',{stdDeviation:9},bl);
+    el('stop',{offset:0,'stop-color':'#0e1318'},lg); el('stop',{offset:.55,'stop-color':'#2c3a45'},lg); el('stop',{offset:1,'stop-color':'#6f818d'},lg);
+    el('rect',{x:0,y:0,width:1600,height:900,fill:'url(#sky)'});
+    el('path',{d:'M0 560 L120 470 L210 520 L330 410 L420 480 L520 430 L640 520 L760 440 L880 500 L1000 390 L1120 470 L1260 420 L1380 500 L1500 450 L1600 490 L1600 900 L0 900Z',fill:'#3c4a55'});
+    function clouds(y,col,op,cls,seed){
+      var g=el('g',{fill:col,opacity:op,'class':cls,filter:'url(#cb)'}); var R=rnd(seed);
+      for(var r=0;r<2;r++) for(var i=0;i<16;i++){var x=i*110+r*1600+R()*40;el('ellipse',{cx:x,cy:y+R()*40,rx:120+R()*110,ry:38+R()*30},g);}
+      return g;
+    }
+    var c1=clouds(600,'#a9b6bf',.85,'',4);
+    var track=el('path',{d:'M-200 610 C200 560 520 640 860 595 S1380 540 1800 575',fill:'none',stroke:'#000000','stroke-width':3});
+    el('path',{d:'M-200 610 C200 560 520 640 860 595 S1380 540 1800 575',fill:'none',stroke:'#ffa000','stroke-width':1,'stroke-dasharray':'2 10',opacity:.6});
+    var cars=[], NC=16;
+    for(var i=0;i<NC;i++){
+      var g=el('g',{});
+      if(i===0){el('rect',{x:-40,y:-24,width:80,height:22,rx:3,fill:'#000000'},g);el('circle',{cx:38,cy:-12,r:3,fill:'#ffffff'},g);}
+      else {el('rect',{x:-26,y:-18,width:52,height:16,rx:1.5,fill:'#121416'},g);el('path',{d:'M-24 -18 Q0 -27 24 -18Z',fill:'#050505'},g);}
+      cars.push(g);
+    }
+    var c2=clouds(700,'#cfd8de',.95,'',9);
+    var c3=clouds(820,'#e6ebee',1,'',13);
+    var len=track.getTotalLength(), s=len*.62, last=null, off=[0,0,0];
+    scenes.push({slide:slide,draw:function(t){
+      var dt=last?Math.min(50,t-last):16; last=t; if(reduce) dt=0;
+      s+=dt*.12; if(s>len+NC*58) s=0;
+      for(var i=0;i<NC;i++){
+        var d=s-(i===0?0:30+i*56); d=Math.max(0,Math.min(len,d));
+        var p=track.getPointAtLength(d), q=track.getPointAtLength(Math.min(len,d+2));
+        var a=Math.atan2(q.y-p.y,q.x-p.x)*180/Math.PI;
+        cars[i].setAttribute('transform','translate('+p.x+' '+(p.y-1)+') rotate('+a+')');
+      }
+      off[0]=(off[0]+dt*.006)%1600; off[1]=(off[1]+dt*.014)%1600; off[2]=(off[2]+dt*.024)%1600;
+      c1.setAttribute('transform','translate('+(-off[0])+' 0)'); c2.setAttribute('transform','translate('+(-off[1])+' 0)'); c3.setAttribute('transform','translate('+(-off[2])+' 0)');
+    }});
+  })();
+
+  /* port at night */
+  (function(){
+    var sv=document.getElementById('sv-port'), slide=sv.closest('.s'), NS='http://www.w3.org/2000/svg';
+    function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);(p||sv).appendChild(e);return e;}
+    var defs=el('defs',{});
+    var lg=el('linearGradient',{id:'ns',x1:0,y1:0,x2:0,y2:1},defs);
+    el('stop',{offset:0,'stop-color':'#07090b'},lg); el('stop',{offset:1,'stop-color':'#1d2a34'},lg);
+    el('rect',{x:0,y:0,width:1600,height:640,fill:'url(#ns)'});
+    el('path',{d:'M0 610 L200 585 L380 600 L560 575 L700 598 L700 640 L0 640Z',fill:'#10161b'});
+    el('rect',{x:0,y:640,width:1600,height:260,fill:'#0c141a'});
+    var waves=el('g',{stroke:'#3d5566','stroke-width':1.2,fill:'none'});
+    for(var i=0;i<12;i++){el('path',{d:'M0 '+(660+i*20)+' L1600 '+(660+i*20),'stroke-dasharray':(30+i*8)+' '+(40+i*10),opacity:.25+i*.05},waves);}
+    el('rect',{x:700,y:600,width:900,height:46,fill:'#15191d'});
+    [[760,300],[920,240],[1060,300]].forEach(function(p){
+      el('path',{d:'M'+p[0]+' 600 L'+(p[0]+150)+' 600 L'+(p[0]+130)+' '+(600-p[1]*.35)+' L'+(p[0]+20)+' '+(600-p[1]*.35)+'Z',fill:'#060708'});
+      el('path',{d:'M'+(p[0]+10)+' '+(600-p[1]*.35)+' Q'+(p[0]+75)+' '+(600-p[1]*.5)+' '+(p[0]+140)+' '+(600-p[1]*.35),fill:'none',stroke:'#4a5964','stroke-width':1});
+    });
+    var crane=el('g',{stroke:'#8fa0ab','stroke-width':3,fill:'none'});
+    el('path',{d:'M1270 600 L1270 330 M1310 600 L1310 330 M1250 330 L1330 330 M1290 330 L1290 290 M1210 340 L1520 340 L1520 360'},crane);
+    el('path',{d:'M1150 600 L1150 400 M1180 600 L1180 400 M1140 400 L1430 400'},crane);
+    var conv=el('path',{id:'conv',d:'M1020 520 L1290 340 L1515 360',fill:'none',stroke:'#2d3a43','stroke-width':2});
+    for(var k=0;k<5;k++){var c=el('circle',{r:3.5,fill:'#ffa000'});var am=el('animateMotion',{dur:'4s',repeatCount:'indefinite',begin:(-k*.8)+'s'},c);el('mpath',{href:'#conv'},am);}
+    var ship=el('g',{});
+    el('path',{d:'M-260 0 L250 0 L230 44 L-238 44Z',fill:'#050607'},ship);
+    el('rect',{x:-240,y:-12,width:470,height:12,fill:'#0b0d0f'},ship);
+    el('rect',{x:-232,y:-62,width:58,height:50,fill:'#0b0d0f'},ship);
+    for(var h=0;h<6;h++) el('rect',{x:-150+h*62,y:-22,width:48,height:10,fill:'#141719'},ship);
+    el('circle',{cx:-210,cy:-50,r:2.5,fill:'#ffffff'},ship);
+    el('circle',{cx:230,cy:-6,r:2,fill:'#ffa000',class:'pulse'},ship);
+    for(var lz=0;lz<9;lz++) el('circle',{cx:740+lz*95,cy:598,r:1.8,fill:'#ffffff',opacity:.7});
+    var last=null, wo=0;
+    scenes.push({slide:slide,draw:function(t){
+      var dt=last?Math.min(50,t-last):16; last=t; if(reduce) dt=0;
+      var bob=reduce?0:Math.sin(t*.0012)*2.5;
+      ship.setAttribute('transform','translate(1450 '+(642+bob).toFixed(1)+')');
+      wo=(wo+dt*.02)%400; waves.setAttribute('transform','translate('+(-wo)+' 0)');
+    }});
+  })();
+
+  /* markets: rays to scale */
+  (function(){
+    var sv=document.getElementById('sv-mk'), NS='http://www.w3.org/2000/svg';
+    function el(n,a,txt){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(txt)e.textContent=txt;sv.appendChild(e);return e;}
+    var C=[500,70], Rm=520, max=10.5;
+    [2,4,6,8,10].forEach(function(km){var r=km/max*Rm;el('path',{d:'M'+(C[0]-r)+' '+C[1]+' A'+r+' '+r+' 0 0 0 '+(C[0]+r)+' '+C[1],'class':'ring'});el('text',{x:C[0]+r,y:C[1]-12,'text-anchor':'middle',style:'font-size:17px'},km===10?'10 тыс. км':String(km));});
+    var M=[['Южная Корея','Пусан, Инчон',2.75,'2,7–2,8',168,720,150,'start'],['Япония','Токио, Йокогама',3.5,'3,5',148,720,265,'start'],['Тайвань','Килун, Тайчжун',4.1,'4,0–4,2',184,720,380,'start'],['Китай','Тяньцзинь, Хуанхуа',3.85,'3,8–3,9',203,300,185,'end'],['Индия','Ченнай',10.5,'10,5',230,120,470,'start']];
+    M.forEach(function(m,i){
+      var a=m[4]*Math.PI/180, r=m[2]/max*Rm, x=C[0]+Math.sin(a)*r, y=C[1]-Math.cos(a)*r;
+      var L=Math.hypot(x-C[0],y-C[1]);
+      el('path',{d:'M'+C[0]+' '+C[1]+' L'+x.toFixed(1)+' '+y.toFixed(1),'class':'ray',style:'--len:'+L.toFixed(0)+';--d:'+(.2+i*.18)+'s'});
+      var lx=m[5], ly=m[6], end=m[7]==='end';
+      if(m[0]!=='Индия') el('path',{d:'M'+x.toFixed(1)+' '+y.toFixed(1)+' L'+(end?lx+14:lx-14)+' '+(ly-8),stroke:'rgba(255,255,255,.28)','stroke-dasharray':'2 5',fill:'none'});
+      el('circle',{cx:x,cy:y,r:5,fill:'#ffffff'});
+      el('circle',{cx:x,cy:y,r:13,fill:'none',stroke:'#ffffff','stroke-width':1,'class':'pulse'});
+      el('text',{x:lx,y:ly,'text-anchor':m[7],'class':'c'},m[0]);
+      el('text',{x:lx,y:ly+34,'text-anchor':m[7],'class':'d'},m[3]+' тыс. км');
+      el('text',{x:lx,y:ly+60,'text-anchor':m[7]},m[1]);
+    });
+    el('circle',{cx:C[0],cy:C[1],r:8,fill:'#ffa000'});
+    el('circle',{cx:C[0],cy:C[1],r:18,fill:'none',stroke:'#ffa000','class':'pulse'});
+    el('text',{x:C[0]-26,y:C[1]-14,'text-anchor':'end','class':'c'},'Эльгинское месторождение');
+  })();
+
+  /* toggles */
+  document.querySelectorAll('.sw input').forEach(function(inp){
+    function apply(){document.querySelectorAll('.site [data-k="'+inp.dataset.k+'"]').forEach(function(e){e.classList.toggle('x',!inp.checked);});}
+    inp.addEventListener('change',function(e){apply(); if(e.isTrusted){userTouched=true; document.querySelectorAll('.sw.pulse').forEach(function(x){x.classList.remove('pulse');}); document.getElementById('tryme').classList.add('done');}}); apply();
+  });
+  var userTouched=false, demoDone=false;
+  function demoToggles(){
+    if(demoDone||reduce) return; demoDone=true;
+    var n=document.getElementById('t-news');
+    setTimeout(function(){ if(userTouched) return; n.checked=true; n.dispatchEvent(new Event('change')); },1100);
+    setTimeout(function(){ if(userTouched) return; n.checked=false; n.dispatchEvent(new Event('change')); },2800);
+  }
+  window.__demoToggles=demoToggles;
+  /* phones: tap toggles screen on touch */
+  document.querySelectorAll('.ph').forEach(function(ph){
+    ph.addEventListener('click',function(){ph.classList.toggle('alt');});
+    ph.addEventListener('keydown',function(e){if(e.key==='Enter'){ph.classList.toggle('alt');}});
+  });
+  /* sparkles */
+  (function(){
+    document.querySelectorAll('.spark canvas').forEach(function(cv){ var slide=cv.closest('.s'), P=null, last=0;
+    scenes.push({slide:slide,draw:function(t){
+      if(t-last<30&&!reduce) return; last=t;
+      var dp=fit(cv), c=cv.getContext('2d'), W=cv.width, H=cv.height;
+      if(!P||P.W!==W){P=[];P.W=W;var n=Math.round(W*H/(dp*dp)*0.0055);for(var i=0;i<n;i++)P.push({x:Math.random()*W,y:Math.random()*H,r:(.4+Math.random()*.8)*dp,ph:Math.random()*6.28,sp:.6+Math.random()*1.6,vy:-(.05+Math.random()*.2)*dp,vx:(Math.random()-.5)*.2*dp});}
+      c.clearRect(0,0,W,H);
+      for(var i=0;i<P.length;i++){var p=P[i]; if(!reduce){p.x+=p.vx;p.y+=p.vy; if(p.y<0){p.y=H;p.x=Math.random()*W;} if(p.x<0)p.x=W; if(p.x>W)p.x=0;}
+        var a=reduce?.7:(.5+.5*Math.sin(t*.002*p.sp+p.ph)); c.globalAlpha=a; c.beginPath(); c.arc(p.x,p.y,p.r,0,6.283); c.fillStyle='#fff'; c.fill();}
+      c.globalAlpha=1;
+    }}); });
+  })();
+
+  /* estimate */
+  var RATE=3675;
+  function nb(s){return s.replace(/ (и|в|на|с|из|к|по|для|RU\/EN\/CN) /g,' $1 ').replace(/ (\S+)$/,' $1').replace(/\((\d) /,'($1 ');}
+  function rub(n){return n.toLocaleString('ru-RU').replace(/\s/g,' ')+' ₽';}
+  function fmt(n){return n.toLocaleString('ru-RU').replace(/\s/g,' ');}
+  /* [название, часы или [мин,макс] в рублях] — рабочие дни = часы / 8, округленно */
+  var rows=[
+    ['Аналитика, структура, прототип и раскадровка главной',60],
+    ['Дизайн: мобильная версия, внутренние страницы',160],
+    ['Графика главной: видео, иллюстрации, 3D и анимация',[900000,1500000]],
+    ['Разработка: верстка, панель MoonShine, включаемые блоки, RU/EN/CN, интеграции с E-Staff и радио',270],
+    ['Перенос контента и тестирование',60],
+    ['Развертывание на инфраструктуре ELGA',20]
+  ];
+  var tb=document.getElementById('est-body'), LO=0, HI=0;
+  rows.forEach(function(r){var tr=document.createElement('tr');tr.innerHTML='<td></td><td></td><td></td>';tr.children[0].textContent=nb(r[0]);
+    if(Array.isArray(r[1])){var a=r[1][0],b=r[1][1];LO+=a;HI+=b;tr.children[1].textContent=Math.round(a/RATE/8)+'–'+Math.round(b/RATE/8);tr.children[2].textContent=fmt(a)+'–'+fmt(b);}
+    else{var v=r[1]*RATE;LO+=v;HI+=v;tr.children[1].textContent=Math.round(r[1]/8);tr.children[2].textContent=fmt(v);}
+    tb.appendChild(tr);});
+  var tt=document.createElement('tr');tt.className='t';tt.innerHTML='<td>Итого</td><td></td><td></td>';tt.children[2].textContent=fmt(LO)+'–'+fmt(HI);tb.appendChild(tt);
+  document.getElementById('sum-lo').textContent=fmt(LO); document.getElementById('sum-hi').textContent=rub(HI);
+  var to=document.createElement('tr');to.className='opt-row';to.innerHTML='<td></td><td></td><td></td>';to.children[0].textContent=nb('Опция: конструктор страниц мероприятий');to.children[1].textContent=Math.round(100/8);to.children[2].textContent=fmt(100*RATE);tb.appendChild(to);
+
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
